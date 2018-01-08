@@ -560,7 +560,7 @@ are as follows:
          7  Secret-Subkey Packet
          8  Compressed Data Packet
          9  Symmetrically Encrypted Data Packet
-        10  Marker Packet
+        10  Reserved (must be ignored)
         11  Literal Data Packet
         12  Trust Packet
         13  User ID Packet
@@ -2032,19 +2032,6 @@ The repetition of 16 bits in the random data prefixed to the message
 allows the receiver to immediately check whether the session key is
 incorrect.  See the "Security Considerations" section for hints on the
 proper use of this "quick check".
-
-## {5.8} Marker Packet (Obsolete Literal Packet) (Tag 10)
-
-An experimental version of PGP used this packet as the Literal packet,
-but no released version of PGP generated Literal packets with this
-tag.  With PGP 5.x, this packet has been reassigned and is reserved
-for use as the Marker packet.
-
-The body of this packet consists of:
-
-  * The three octets 0x50, 0x47, 0x50 (which spell "PGP" in UTF-8).
-
-Such a packet MUST be ignored when received.
 
 ## {5.9} Literal Data Packet (Tag 11)
 
