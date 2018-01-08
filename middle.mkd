@@ -30,8 +30,7 @@ for OpenPGP)
   * GnuPG - GNU Privacy Guard, also called GPG.  GnuPG is an OpenPGP
     implementation that avoids all encumbered algorithms.
     Consequently, early versions of GnuPG did not include RSA public
-    keys.  GnuPG may or may not have (depending on version) support
-    for IDEA or other encumbered algorithms.
+    keys.
 
 "PGP", "Pretty Good", and "Pretty Good Privacy" are trademarks of PGP
 Corporation and are used with permission.  The term "OpenPGP" refers to
@@ -360,11 +359,6 @@ possibilities:
 
        0:                 secret data is unencrypted (no passphrase)
        255, 254, or 253:  followed by algorithm octet and S2K specifier
-       Cipher alg:        use Simple S2K algorithm using MD5 hash
-
-This last possibility, the cipher algorithm number with an implicit
-use of MD5 and IDEA, is provided for backward compatibility; it MAY be
-understood, but SHOULD NOT be generated, and is deprecated.
 
 These are followed by an Initial Vector of the same length as the
 block size of the cipher for the decryption of the secret values, if
@@ -2172,13 +2166,10 @@ The body of this packet consists of:
   * Encrypted data, the output of the selected symmetric-key cipher
     operating in OpenPGP's variant of Cipher Feedback (CFB) mode.
 
-The symmetric cipher used may be specified in a Public-Key or
+The symmetric cipher used MUST be specified in a Public-Key or
 Symmetric-Key Encrypted Session Key packet that precedes the
-Symmetrically Encrypted Data packet.  In that case, the cipher
-algorithm octet is prefixed to the session key before it is
-encrypted.  If no packets of these types precede the encrypted data,
-the IDEA algorithm is used with the session key calculated as the MD5
-hash of the passphrase, though this use is deprecated.
+Symmetrically Encrypted Data packet.  The cipher algorithm octet is
+prefixed to the session key before it is encrypted.
 
 The data is encrypted in CFB mode, with a CFB shift size equal to the
 cipher's block size.  The Initial Vector (IV) is specified as all
@@ -3143,7 +3134,7 @@ sequence of octets is the valid representation of a curve OID.
        ID  Algorithm
  --------  ---------
         0  Plaintext or unencrypted data
-        1  IDEA [](#IDEA)
+        1  Reserved
         2  TripleDES (DES-EDE, [](#SCHNEIER) [](#HAC)
                        - 168 bit key derived from 192)
         3  CAST5 (128 bit key, as per [](#RFC2144))
@@ -4699,10 +4690,6 @@ differences are small, but small differences are frequently more
 vexing than large differences.  Thus, this is a non-comprehensive list
 of potential problems and gotchas for a developer who is trying to be
 backward-compatible.
-
-  * The IDEA algorithm is patented.  It is also the de-facto preferred
-    algorithm for a V3 key with a V3 self-signature (or no self-
-    signature).
 
   * There are many ways possible for two keys to have the same key
     material, but different fingerprints (and thus Key IDs).
