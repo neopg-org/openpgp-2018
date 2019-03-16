@@ -871,7 +871,7 @@ The value of the subpacket type octet may be:
     13 to 15   Reserved
           16   Issuer
     17 to 19   Reserved
-          20   Notation Data
+          20   Reserved
           21   Preferred Hash Algorithms
           22   Reserved
           23   Key Server Preferences
@@ -1131,118 +1131,6 @@ designated revoker, or when it is accompanied by a revocation
 signature from that revoker.  Note that it may be appropriate to
 isolate this subpacket within a separate signature so that it is not
 combined with other subpackets that need to be exported.
-
-#### {5.2.3.16} Notation Data
-
-       (4 octets of flags, 2 octets of name length (M),
-                           2 octets of value length (N),
-                           M octets of name data,
-                           N octets of value data)
-
-This subpacket describes a "notation" on the signature that the issuer
-wishes to make.  The notation has a name and a value, each of which are
-strings of octets.  There may be more than one notation in a signature.
-Notations can be used for any extension the issuer of the signature
-cares to make.  The "flags" field holds four octets of flags.
-
-All undefined flags MUST be zero.  Defined flags are as follows:
-
-       First octet: 0x80 = human-readable.  This note value is text.
-       Other octets: none.
-
-Notation names are arbitrary strings encoded in UTF-8.  They reside in
-two namespaces: The IETF namespace and the user namespace.
-
-The IETF namespace is registered with IANA.  These names MUST NOT
-contain the "@" character (0x40).  This is a tag for the user
-namespace.
-
-Names in the user namespace consist of a UTF-8 string tag followed by
-"@" followed by a DNS domain name.  Note that the tag MUST NOT contain
-an "@" character.  For example, the "sample" tag used by Example
-Corporation could be "sample@example.com".
-
-Names in a user space are owned and controlled by the owners of that
-domain.  Obviously, it's bad form to create a new name in a DNS space
-that you don't own.
-
-Since the user namespace is in the form of an email address,
-implementers MAY wish to arrange for that address to reach a person
-who can be consulted about the use of the named tag.  Note that due to
-UTF-8 encoding, not all valid user space name tags are valid email
-addresses.
-
-If there is a critical notation, the criticality applies to that
-specific notation and not to notations in general.
-
-The following subsections define a set of standard notations.
-
-##### The 'manu' Notation
-
-The "manu" notation is a string that declares the device
-manufacturer's name.  The certifier key is asserting this string
-(which may or may not be related to the User ID of the certifier's
-key).
-
-##### The 'make' Notation
-
-This notation defines the product make.  It is a free form string.
-
-##### The 'model' Notation
-
-This notation defines the product model name/number.  It is a free form string.
-
-##### The 'prodid' Notation
-
-This notation contains the product identifier.  It is a free form string.
-
-##### The 'pvers' Notation
-
-This notation defines the product version number (which could be a
-release number, year, or some other identifier to differentiate
-different versions of the same make/model).  It is a free form string.
-
-##### The 'lot' Notation
-
-This notation defines the product lot number (which is an indicator of
-the batch of product).  It is a free form string.
-
-##### The 'qty' Notation
-
-This notation defines the quantity of items in this package.  It is a
-decimal integer representation with no punctuation, e.g. "10", "1000",
-"10000", etc.
-
-##### The 'loc' and 'dest' Notations
-
-The "loc" and 'dest' notations declare a GeoLocation as defined by RFC
-5870 [](#RFC5870) but without the leading "geo:" header.  For example,
-if you had a GeoLocation URI of "geo:13.4125,103.8667" you would
-encode that in these notations as "13.4125,103.8667".
-
-The 'loc' notation is meant to encode the geo location where the
-signature was made.  The 'dest' notation is meant to encode the geo
-location where the device is "destined" (i.e., a "destination" for the
-device).
-
-##### The 'hash' Notation
-
-A 'hash' notation is a means to include external data in the contents
-of a signature without including the data itself.  This is done by
-hashing the external data separately and then including the data's
-name and hash in the signature via this notation.  This is useful, for
-example, to have an external "manifest," "image," or other data that
-might not be vital to the signature itself but still needs to be
-protected and authenticated without requiring a second signature.
-
-The 'hash' notation has the following structure:
-* A single byte specifying the length of the name of the hashed data
-* A UTF-8 string of the name of the hashed data
-* A single byte specifying the hash algorithm (see section 9.4)
-* The binary hash output of the hashed data using the specified algorithm.  (The length of this data is implicit based on the algorithm specified).
-
-Due to its nature a 'hash' notation is not human readable and MUST NOT
-be marked as such when used.
 
 #### {5.2.3.17} Key Server Preferences
 
@@ -2023,90 +1911,6 @@ the name and email address of the key holder.  By convention, it
 includes an RFC 2822 [](#RFC2822) mail name-addr, but there are no
 restrictions on its content.  The packet length in the header specifies
 the length of the User ID.
-
-## {5.12} User Attribute Packet (Tag 17)
-
-The User Attribute packet is a variation of the User ID packet.  It is
-capable of storing more types of data than the User ID packet, which
-is limited to text.  Like the User ID packet, a User Attribute packet
-may be certified by the key owner ("self-signed") or any other key
-owner who cares to certify it.  Except as noted, a User Attribute
-packet may be used anywhere that a User ID packet may be used.
-
-While User Attribute packets are not a required part of the OpenPGP
-standard, implementations SHOULD provide at least enough compatibility
-to properly handle a certification signature on the User Attribute
-packet. A simple way to do this is by treating the User Attribute
-packet as a User ID packet with opaque contents, but an implementation
-may use any method desired.
-
-The User Attribute packet is made up of one or more attribute
-subpackets.  Each subpacket consists of a subpacket header and a body.
-The header consists of:
-
-  * the subpacket length (1, 2, or 5 octets)
-
-  * the subpacket type (1 octet)
-
-and is followed by the subpacket specific data.
-
-The following table lists the currently known subpackets:
-
-     Type  Attribute Subpacket
-  -------  ---------------------------------------------------------
-        1  Image Attribute Subpacket
-    [TBD1] User ID Attribute Subpacket
-  100-110  Private/Experimental Use
-
-An implementation SHOULD ignore any subpacket of a type that it
-does not recognize.
-
-### {5.12.1} The Image Attribute Subpacket
-
-The Image Attribute subpacket is used to encode an image, presumably
-(but not required to be) that of the key owner.
-
-The Image Attribute subpacket begins with an image header.  The first
-two octets of the image header contain the length of the image
-header.  Note that unlike other multi-octet numerical values in this
-document, due to a historical accident this value is encoded as a
-little-endian number.  The image header length is followed by a single
-octet for the image header version.  The only currently defined version
-of the image header is 1, which is a 16-octet image header.  The first
-three octets of a version 1 image header are thus 0x10, 0x00, 0x01.
-
-The fourth octet of a version 1 image header designates the encoding
-format of the image.  The only currently defined encoding format is the
-value 1 to indicate JPEG.  Image format types 100 through 110 are
-reserved for private or experimental use.  The rest of the version 1
-image header is made up of 12 reserved octets, all of which MUST be
-set to 0.
-
-The rest of the image subpacket contains the image itself.  As the only
-currently defined image type is JPEG, the image is encoded in the JPEG
-File Interchange Format (JFIF), a standard file format for JPEG images
-[](#JFIF).
-
-An implementation MAY try to determine the type of an image by
-examination of the image data if it is unable to handle a particular
-version of the image header or if a specified encoding format value is
-not recognized.
-
-### User ID Attribute Subpacket
-
-A User ID Attribute subpacket has type #[IANA -- assignment TBD1].
-
-A User ID Attribute subpacket, just like a User ID packet, consists of
-UTF-8 text that is intended to represent the name and email address of
-the key holder.  By convention, it includes an RFC 2822 [](#RFC2822)
-mail name-addr, but there are no restrictions on its content.  For
-devices using OpenPGP for device certificates, it may just be the
-device identifier.  The packet length in the header specifies the
-length of the User ID.
-
-Because User Attribute subpackets can be used anywhere a User ID
-packet can be used, implementations MAY choose to trust a signed User
-Attribute subpacket that includes a User ID Attribute subpacket.
 
 ## {5.13} Sym. Encrypted Integrity Protected Data Packet (Tag 18)
 
@@ -2966,34 +2770,6 @@ reference to the defining specification.  The initial values for this
 registry can be found in Section 4.3.  Adding a new packet type MUST be
 done through the IETF CONSENSUS method, as described in [](#RFC2434).
 
-### {10.2.1} User Attribute Types
-
-The User Attribute packet permits an extensible mechanism for other
-types of certificate identification.  This specification creates a
-registry of User Attribute types.  The registry includes the User
-Attribute type, the name of the User Attribute, and a reference to the
-defining specification.  The initial values for this registry can be
-found in Section 5.12.  Adding a new User Attribute type MUST be done
-through the IETF CONSENSUS method, as described in [](#RFC2434).
-
-This document requests that IANA register the User ID Attribute Type
-found in Section 5.12.2:
-
-  Value   Attribute    Reference
-  -----   ---------    ----------
-  TBD1    User ID      This Document Section 5.12
-
-### {10.2.1.1} Image Format Subpacket Types
-
-Within User Attribute packets, there is an extensible mechanism for
-other types of image-based user attributes.  This specification creates
-a registry of Image Attribute subpacket types.  The registry includes
-the Image Attribute subpacket type, the name of the Image Attribute
-subpacket, and a reference to the defining specification.  The initial
-values for this registry can be found in Section 5.12.1.  Adding a new
-Image Attribute subpacket type MUST be done through the IETF CONSENSUS
-method, as described in [](#RFC2434).
-
 ### {10.2.2} New Signature Subpackets
 
 OpenPGP signatures contain a mechanism for signed (or unsigned) data
@@ -3004,43 +2780,6 @@ Signature subpacket type, the name of the subpacket, and a reference
 to the defining specification.  The initial values for this registry
 can be found in Section 5.2.3.1.  Adding a new Signature subpacket MUST
 be done through the IETF CONSENSUS method, as described in [](#RFC2434).
-
-#### {10.2.2.1} Signature Notation Data Subpackets
-
-OpenPGP signatures further contain a mechanism for extensions in
-signatures.  These are the Notation Data subpackets, which contain a
-key/value pair.  Notations contain a user space that is completely
-unmanaged and an IETF space.
-
-This specification creates a registry of Signature Notation Data
-types.  The registry includes the Signature Notation Data type, the
-name of the Signature Notation Data, its allowed values, and a
-reference to the defining specification.  The initial values for this
-registry can be found in Section 5.2.3.16.  Adding a new Signature
-Notation Data subpacket MUST be done through the EXPERT REVIEW method,
-as described in [](#RFC2434).
-
-This document requests IANA register the following Signature
-Notation Data types:
-
-   Allowed Values   Name     Type               Reference
-   --------------   -------  ------------       ----------------
-   Any String       manu     Manufacturer Name  This Doc Section 5.2.3.16.1
-   Any String       make     Product Make       This Doc Section 5.2.3.16.2
-   Any String       model    Product Model      This Doc Section 5.2.3.16.3
-   Any String       prodid   Product ID         This Doc Section 5.2.3.16.4
-   Any String       pvers    Product Version    This Doc Section 5.2.3.16.5
-   Any String       lot      Product Lot Number This Doc Section 5.2.3.16.6
-   Decimal Integer  qty      Package Quantity   This Doc Section 5.2.3.16.7
-     String
-   A geo: URI       loc      Current Geo-       This Doc Section 5.2.3.16.8
-     without the             location
-     "geo:"                  Latitude/Longitude
-   A geo: URI       dest     Destination Geo-   This Doc Section 5.2.3.16.8
-     without the             location
-     "geo:"                  Latitude/Longitude
-   Hash Notation    hash     The Hash of        This Doc Section 5.2.3.16.9
-     data                    external data
 
 #### {10.2.2.2} Key Server Preference Extensions
 
@@ -3189,11 +2928,6 @@ transferable public key are as follows:
   - After each User ID packet, zero or more Signature packets
     (certifications)
 
-  - Zero or more User Attribute packets
-
-  - After each User Attribute packet, zero or more Signature packets
-    (certifications)
-
   - Zero or more Subkey packets
 
   - After each Subkey packet, one Signature packet, plus optionally a
@@ -3213,21 +2947,11 @@ packet.  The signature serves to certify the corresponding public key
 and User ID.  In effect, the signer is testifying to his or her belief
 that this public key belongs to the user identified by this User ID.
 
-Within the same section as the User ID packets, there are zero or more
-User Attribute packets.  Like the User ID packets, a User Attribute
-packet is followed by zero or more Signature packets calculated on the
-immediately preceding User Attribute packet and the initial Public-Key
-packet.
-
-User Attribute packets and User ID packets may be freely intermixed in
-this section, so long as the signatures that follow them are
-maintained on the proper User Attribute or User ID packet.
-
-After the User ID packet or Attribute packet, there may be zero or
-more Subkey packets.  In general, subkeys are provided in cases where
-the top-level public key is a signature-only key.  However, any V4 key
-may have subkeys, and the subkeys may be encryption-only keys,
-signature-only keys, or general-purpose keys.
+After the User ID packet, there may be zero or more Subkey packets.
+In general, subkeys are provided in cases where the top-level public
+key is a signature-only key.  However, any V4 key may have subkeys,
+and the subkeys may be encryption-only keys, signature-only keys, or
+general-purpose keys.
 
 Each Subkey packet MUST be followed by one Signature packet, which
 should be a subkey binding signature issued by the top-level key.  For
@@ -3307,7 +3031,6 @@ of the primary key.
        [Revocation Self Signature]
        [Direct Key Signature...]
        [User ID [Signature ...] ...]
-       [User Attribute [Signature ...] ...]
        [[Subkey [Binding-Signature-Revocation]
                Primary-Key-Binding-Signature] ...]
 
@@ -3321,10 +3044,8 @@ In the above diagram, if the binding signature of a subkey has been
 revoked, the revoked key may be removed, leaving only one key.
 
 In a V4 key, the primary key SHOULD be a key capable of
-certification.  There are cases, such as device certificates, where
-the primary key may not be capable of certification. A primary key
-capable of making signatures SHOULD be accompanied by either a
-certification signature (on a User ID or User Attribute) or a
+certification. A primary key capable of making signatures SHOULD be
+accompanied by either a certification signature (on a User ID) or a
 signature directly on the key.
 
 Implementations SHOULD accept encryption-only primary keys without a
@@ -4232,59 +3953,7 @@ SHOULD be rejected.
   - Although technically possible, the EdDSA algorithm MUST NOT be
     used with a digest algorithms weaker than SHA2-256.
 
-
-OpenPGP was designed with security in mind, with many smart,
-intelligent people spending a lot of time thinking about the
-ramifications of their decisions.  Removing the requirement for
-self-certifying User ID (and User Attribute) packets on a key means
-that someone could surreptitiously add an unwanted ID to a key and
-sign it.  If enough "trusted" people sign that surreptitious identity
-then other people might believe it.  The attack could wind up sending
-encrypted mail destined for alice to some other target, bob, because
-someone added "alice" to bob's key without bob's consent.
-
-In the case of device certificates the device itself does not have any
-consent.  It is given an identity by the device manufacturer and the
-manufacturer can insert that ID on the device certificate, signing it
-with the manufacturer's key.  If another people wants to label the
-device by another name, they can do so.  There is no harm in multiple
-IDs, because the verification is all done based on who has signed
-those IDs.
-
-When a key can self-sign, it is still suggested to self-certify IDs,
-even if it no longer required by this modification to OpenPGP.  This
-at least signals to recipients of keys that yes, the owner of this key
-asserts that this identity belongs to herself.  Note, however, that
-mallet could still assert that he is 'alice' and could even
-self-certify that.  So the attack is not truly different.  Moreover,
-in the case of device certificates, it's more the manufacturer than
-the device that wants to assert an identity (even if the device could
-self-certify).
-
-There is no signaling whether a key is using this looser-requirement
-key format.  An attacker could therefore just remove the
-self-signature off a published key.  However one would hope that wide
-publication would result in another copy still having that signature
-and it being returned quickly.  However, the lack of signaling also
-means that a user with an application following RFC 4880 directly
-would see a key following this specification as "broken" and may not
-accept it.
-
-On a different note, including the "geo" notation could leak
-information about where a signer is located.  However it is just an
-assertion (albeit a signed assertion) so there is no verifiable truth
-to the location information released.  Similarly, all the rest of the
-signature notations are pure assertions, so they should be taken with
-the trustworthiness of the signer.
-
-Combining the User ID with the User Attribute means that an ID and
-image would not be separable.  For a person this is probably not good,
-but for a device it's unlikely the image will change so it makes sense
-to combine the ID and image into a single signed packet with a single
-signature.
-
-
-# Compatibility Profiles
+ # Compatibility Profiles
 
 ## OpenPGP ECC Profile
 
