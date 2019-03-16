@@ -874,8 +874,8 @@ The value of the subpacket type octet may be:
           20   Reserved
           21   Preferred Hash Algorithms
           22   Reserved
-          23   Key Server Preferences
-          24   Preferred Key Server
+          23   Reserved
+          24   Reserved
           25   Primary User ID
           26   Policy URI
           27   Key Flags
@@ -1131,30 +1131,6 @@ designated revoker, or when it is accompanied by a revocation
 signature from that revoker.  Note that it may be appropriate to
 isolate this subpacket within a separate signature so that it is not
 combined with other subpackets that need to be exported.
-
-#### {5.2.3.17} Key Server Preferences
-
-(N octets of flags)
-
-This is a list of one-bit flags that indicate preferences that the key
-holder has about how the key is handled on a key server.  All undefined
-flags MUST be zero.
-
-First octet: 0x80 = No-modify the key holder requests that this key
-only be modified or updated by the key holder or an administrator of
-the key server.
-
-This is found only on a self-signature.
-
-#### {5.2.3.18} Preferred Key Server
-
-(String)
-
-This is a URI of a key server that the key holder prefers be used for
-updates.  Note that keys with multiple User IDs can have a preferred
-key server for each User ID.  Note also that since this is a URI, the
-key server can actually be a copy of the key retrieved by ftp, http,
-finger, etc.
 
 #### {5.2.3.19} Primary User ID
 
@@ -2780,16 +2756,6 @@ Signature subpacket type, the name of the subpacket, and a reference
 to the defining specification.  The initial values for this registry
 can be found in Section 5.2.3.1.  Adding a new Signature subpacket MUST
 be done through the IETF CONSENSUS method, as described in [](#RFC2434).
-
-#### {10.2.2.2} Key Server Preference Extensions
-
-OpenPGP signatures contain a mechanism for preferences to be specified
-about key servers.  This specification creates a registry of key server
-preferences.  The registry includes the key server preference, the name
-of the preference, and a reference to the defining specification.  The
-initial values for this registry can be found in Section 5.2.3.17.
-Adding a new key server preference MUST be done through the IETF
-CONSENSUS method, as described in [](#RFC2434).
 
 #### {10.2.2.3} Key Flags Extensions
 
