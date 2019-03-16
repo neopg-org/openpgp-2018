@@ -375,60 +375,12 @@ Note that the most significant bit is the leftmost bit, called bit
          PTag |7 6 5 4 3 2 1 0|
               +---------------+
          Bit 7 -- Always one
-         Bit 6 -- New packet format if set
-
-The new packet format is RECOMMENDED.  Note that old format packets
-have four bits of packet tags, and new format packets have six; some
-features cannot be used and still be backward-compatible.
-
-Also note that packets with a tag greater than or equal to 16 MUST use
-new format packets.  The old format packets can only express tags less
-than or equal to 15.
-
-Old format packets contain:
-
-         Bits 5-2 -- packet tag
-         Bits 1-0 -- length-type
-
-New format packets contain:
-
+         Bit 6 -- Always one
          Bits 5-0 -- packet tag
 
+### {4.2.2} Packet Lengths
 
-### {4.2.1} Old Format Packet Lengths
-
-The meaning of the length-type in old format packets is:
-
-0
-  : The packet has a one-octet length.  The header is 2 octets long.
-
-1
-  : The packet has a two-octet length.  The header is 3 octets long.
-
-2
-  : The packet has a four-octet length.  The header is 5 octets long.
-
-3
-  : The packet is of indeterminate length.  The header is 1 octet
-    long, and the implementation must determine how long the packet
-    is.  If the packet is in a file, this means that the packet
-    extends until the end of the file.  In general, an implementation
-    SHOULD NOT use indeterminate-length packets except where the end
-    of the data will be clear from the context, and even then it is
-    better to use a definite length, or a new format header.  The new
-    format headers described below have a mechanism for precisely
-    encoding data of indeterminate length.
-
-
-### {4.2.2} New Format Packet Lengths
-
-New format packets have four possible ways of encoding length:
-
-  1.  A one-octet Body Length header encodes packet lengths of up to
-      191 octets.
-
-  2.  A two-octet Body Length header encodes packet lengths of 192
-      to 8383 octets.
+Packets have two possible ways of encoding length:
 
   3.  A five-octet Body Length header encodes packet lengths of up
       to 4,294,967,295 (0xFFFFFFFF) octets in length. (This actually
@@ -437,23 +389,6 @@ New format packets have four possible ways of encoding length:
   4.  When the length of the packet body is not known in advance by
       the issuer, Partial Body Length headers encode a packet of
       indeterminate length, effectively making it a stream.
-
-
-#### {4.2.2.1} One-Octet Lengths
-
-A one-octet Body Length header encodes a length of 0 to 191
-octets.  This type of length header is recognized because the one octet
-value is less than 192.  The body length is equal to:
-
-       bodyLen = 1st_octet;
-
-#### {4.2.2.2} Two-Octet Lengths
-
-A two-octet Body Length header encodes a length of 192 to 8383 octets.
-It is recognized because its first octet is in the range 192 to
-223.  The body length is equal to:
-
-       bodyLen = ((1st_octet - 192) << 8) + (2nd_octet) + 192
 
 #### {4.2.2.3} Five-Octet Lengths
 
@@ -498,12 +433,6 @@ any other packet types.
 These examples show ways that new format packets might encode the
 packet lengths.
 
-A packet with length 100 may have its length encoded in one octet:
-0x64.  This is followed by 100 octets of data.
-
-A packet with length 1723 may have its length encoded in two octets:
-0xC5, 0xFB.  This header is followed by the 1723 octets of data.
-
 A packet with length 100000 may have its length encoded in five
 octets: 0xFF, 0x00, 0x01, 0x86, 0xA0.
 
@@ -520,10 +449,8 @@ packet is the length of the header(s) plus the length of the body.
 
 ## {4.3} Packet Tags
 
-The packet tag denotes what type of packet the body holds.  Note that
-old format headers can only have tags less than 16, whereas new format
-headers can have tags as great as 63.  The defined tags (in decimal)
-are as follows:
+The packet tag denotes what type of packet the body holds.  The
+defined tags (in decimal) are as follows:
 
        Tag  Packet Type
   --------  --------------------------------------------------
