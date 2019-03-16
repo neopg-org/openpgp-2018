@@ -55,8 +55,6 @@ by using these core technologies:
 
  - encryption
 
- - compression
-
  - Radix-64 conversion
 
 In addition, OpenPGP provides key management and certificate services,
@@ -82,14 +80,12 @@ encrypted with the receiver's public key.  The sequence is as follows:
     These "encrypted session keys" start the message.
 
 4.  The sending OpenPGP encrypts the message using the session key,
-    which forms the remainder of the message.  Note that the message is
-    also usually compressed.
+    which forms the remainder of the message.
 
 5.  The receiving OpenPGP decrypts the session key using the recipient's
     private key.
 
-6.  The receiving OpenPGP decrypts the message using the session key.  If
-    the message was compressed, it will be decompressed.
+6.  The receiving OpenPGP decrypts the message using the session key.
 
 With symmetric-key encryption, an object may be encrypted with a
 symmetric key derived from a passphrase (or other shared secret), or a
@@ -122,23 +118,6 @@ and a public-key signature algorithm.  The sequence is as follows:
 6.  The receiving software generates a new hash code for the received
     message and verifies it using the message's signature.  If the
     verification is successful, the message is accepted as authentic.
-
-## {2.3}  Compression
-
-OpenPGP implementations SHOULD compress the message after applying the
-signature but before encryption.
-
-If an implementation does not implement compression, its authors
-should be aware that most OpenPGP messages in the world are
-compressed.  Thus, it may even be wise for a space-constrained
-implementation to implement decompression, but not compression.
-
-Furthermore, compression has the added side effect that some types of
-attacks can be thwarted by the fact that slightly altered, compressed
-data rarely uncompresses without severe errors.  This is hardly
-rigorous, but it is operationally useful.  These attacks can be
-rigorously prevented by implementing and using Modification Detection
-Codes as described in sections following.
 
 ## {2.4} Conversion to Radix-64
 
@@ -378,8 +357,7 @@ An OpenPGP message is constructed from a number of records that are
 traditionally called packets. A packet is a chunk of data that has a
 tag specifying its meaning.  An OpenPGP message, keyring, certificate,
 and so forth consists of a number of packets.  Some of those packets
-may contain other OpenPGP packets (for example, a compressed data
-packet, when uncompressed, contains OpenPGP packets).
+may contain other OpenPGP packets.
 
 Each packet consists of a packet header, followed by the packet body.
 The packet header is of variable length.
@@ -512,7 +490,7 @@ Note also that the last Body Length header can be a zero-length
 header.
 
 An implementation MAY use Partial Body Lengths for data packets, be
-they literal, compressed, or encrypted.  The first partial length MUST
+they literal, or encrypted.  The first partial length MUST
 be at least 512 octets long.  Partial Body Lengths MUST NOT be used for
 any other packet types.
 
@@ -558,7 +536,7 @@ are as follows:
          5  Secret-Key Packet
          6  Public-Key Packet
          7  Secret-Subkey Packet
-         8  Compressed Data Packet
+         8  Reserved
          9  Symmetrically Encrypted Data Packet
         10  Reserved (must be ignored)
         11  Literal Data Packet
@@ -896,7 +874,7 @@ The value of the subpacket type octet may be:
     17 to 19   Reserved
           20   Notation Data
           21   Preferred Hash Algorithms
-          22   Preferred Compression Algorithms
+          22   Reserved
           23   Key Server Preferences
           24   Preferred Key Server
           25   Primary User ID
@@ -1053,18 +1031,6 @@ Message digest algorithm numbers that indicate which algorithms the
 key holder prefers to receive.  Like the preferred symmetric
 algorithms, the list is ordered.  Algorithm numbers are in Section
 9.  This is only found on a self-signature.
-
-#### {5.2.3.9} Preferred Compression Algorithms
-
-(array of one-octet values)
-
-Compression algorithm numbers that indicate which algorithms the key
-holder prefers to use.  Like the preferred symmetric algorithms, the
-list is ordered.  Algorithm numbers are in Section 9.  If this subpacket
-is not included, ZIP is preferred. A zero denotes that uncompressed
-data is preferred; the key holder's software might have no compression
-software in that implementation.  This is only found on a
-self-signature.
 
 #### {5.2.3.10} Signature Expiration Time
 
@@ -1967,38 +1933,11 @@ The secret key is this single multiprecision integer:
   * MPI of an integer representing the secret key, which is a
     scalar of the public EC point.
 
-
-## {5.6} Compressed Data Packet (Tag 8)
-
-The Compressed Data packet contains compressed data.  Typically, this
-packet is found as the contents of an encrypted packet, or following a
-Signature or One-Pass Signature packet, and contains a literal data
-packet.
-
-The body of this packet consists of:
-
-  * One octet that gives the algorithm used to compress the packet.
-
-  * Compressed data, which makes up the remainder of the packet.
-
-A Compressed Data Packet's body contains an block that compresses some
-set of packets.  See section "Packet Composition" for details on how
-messages are formed.
-
-ZIP-compressed packets are compressed with raw RFC 1951 [](#RFC1951)
-DEFLATE blocks.
-
-ZLIB-compressed packets are compressed with RFC 1950 [](#RFC1950)
-ZLIB- style blocks.
-
-BZip2-compressed packets are compressed using the BZip2 [](#BZ2)
-algorithm.
-
 ## {5.7} Symmetrically Encrypted Data Packet (Tag 9)
 
 The Symmetrically Encrypted Data packet contains data encrypted with a
 symmetric-key algorithm.  When it has been decrypted, it contains other
-packets (usually a literal data packet or compressed data packet, but
+packets (usually a literal data packet, but
 in theory other Symmetrically Encrypted Data packets or sequences of
 packets that form whole OpenPGP messages).
 
@@ -2199,7 +2138,7 @@ signature with a Features subpacket.
 This packet contains data encrypted with a symmetric-key algorithm and
 protected against modification by the SHA-1 hash algorithm.  When it
 has been decrypted, it will typically contain other packets (often a
-Literal Data packet or Compressed Data packet).  The last decrypted
+Literal Data packet).  The last decrypted
 packet in this packet's payload MUST be a Modification Detection Code
 packet.
 
@@ -2348,8 +2287,7 @@ the data hash.  While this is a bit restrictive, it reduces complexity.
 
 This packet contains data encrypted with an authenticated encryption and
 additional data (AEAD) construction.  When it has been decrypted, it
-will typically contain other packets (often a Literal Data packet or
-Compressed Data packet).
+will typically contain other packets (often a Literal Data packet).
 
 The body of this packet consists of:
 
@@ -2549,7 +2487,7 @@ line texts include the following strings:
 
 BEGIN PGP MESSAGE
 
-  ~ Used for signed, encrypted, or compressed files.
+  ~ Used for signed, or encrypted files.
 
 BEGIN PGP PUBLIC KEY BLOCK
 
@@ -2967,20 +2905,6 @@ Implementations MUST implement TripleDES.  Implementations SHOULD
 implement AES-128 and CAST5.  Implementations MAY implement any other
 algorithm.
 
-## {9.3} Compression Algorithms
-
-       ID  Algorithm
- --------  ---------
-        0  Uncompressed
-        1  ZIP [RFC1951]
-        2  ZLIB [RFC1950]
-        3  BZip2 [](#BZ2)
- 100--110  Private/Experimental algorithm
-
-Implementations MUST implement uncompressed data.  Implementations
-SHOULD implement ZIP.  Implementations MAY implement any other
-algorithm.
-
 ## {9.4} Hash Algorithms
 
        ID  Algorithm                        Text Name
@@ -3245,16 +3169,6 @@ This document requests IANA register the following hash algorithms:
     has been reserved so that the SHA3 algorithm IDs align nicely with
     their SHA2 counterparts.]
 
-### {10.3.4} Compression Algorithms
-
-OpenPGP specifies a number of compression algorithms.  This
-specification creates a registry of compression algorithm
-identifiers.  The registry includes the algorithm name and a reference
-to the defining specification.  The initial values for this registry
-can be found in Section 9.3.  Adding a new compression key algorithm
-MUST be done through the IETF CONSENSUS method, as described in
-[](#RFC2434).
-
 # {11} Packet Composition
 
 OpenPGP packets are assembled into sequences in order to create
@@ -3350,9 +3264,7 @@ to the following grammatical rules (comma represents sequential
 composition, and vertical bar separates alternatives):
 
     OpenPGP Message :- Encrypted Message | Signed Message |
-                       Compressed Message | Literal Message.
-
-    Compressed Message :- Compressed Data Packet.
+                       Literal Message.
 
     Literal Message :- Literal Data Packet.
 
@@ -3373,9 +3285,8 @@ composition, and vertical bar separates alternatives):
                       One-Pass Signed Message.
 
 In addition, decrypting a Symmetrically Encrypted Data packet or a
-Symmetrically Encrypted Integrity Protected Data packet as well as
-decompressing a Compressed Data packet must yield a valid OpenPGP
-Message.
+Symmetrically Encrypted Integrity Protected Data packet must yield a
+valid OpenPGP Message.
 
 ## {11.4} Detached Signatures
 
@@ -3889,33 +3800,7 @@ decrypt it anyway.
 
 Other algorithm preferences work similarly to the symmetric algorithm
 preference, in that they specify which algorithms the keyholder
-accepts.  There are two interesting cases that other comments need to
-be made about, though, the compression preferences and the hash
-preferences.
-
-### {13.3.1} Compression Preferences
-
-Compression has been an integral part of PGP since its first days.
-OpenPGP and all previous versions of PGP have offered compression.  In
-this specification, the default is for messages to be compressed,
-although an implementation is not required to do so.  Consequently, the
-compression preference gives a way for a keyholder to request that
-messages not be compressed, presumably because they are using a
-minimal implementation that does not include
-compression.  Additionally, this gives a keyholder a way to state that
-it can support alternate algorithms.
-
-Like the algorithm preferences, an implementation MUST NOT use an
-algorithm that is not in the preference vector.  If the preferences are
-not present, then they are assumed to be [ZIP(1), Uncompressed(0)].
-
-Additionally, an implementation MUST implement this preference to the
-degree of recognizing when to send an uncompressed message. A robust
-implementation would satisfy this requirement by looking at the
-recipient's preference and acting accordingly. A minimal
-implementation can satisfy this requirement by never generating a
-compressed message, since all implementations can handle messages that
-have not been compressed.
+accepts.  Other comments need to be made about the hash preferences.
 
 ### {13.3.2} Hash Algorithm Preferences
 
@@ -4188,17 +4073,6 @@ SHOULD be rejected.
     decrypted message to the attacker.  The attacker is thus using the
     user as a random oracle, and can often decrypt the message.
 
-    Compressing data can ameliorate this attack.  The incorrectly
-    decrypted data nearly always decompresses in ways that defeat the
-    attack.  However, this is not a rigorous fix, and leaves open some
-    small vulnerabilities.  For example, if an implementation does not
-    compress a message before encryption (perhaps because it knows it
-    was already compressed), then that message is vulnerable.  Because of
-    this happenstance -- that modification attacks can be thwarted by
-    decompression errors -- an implementation SHOULD treat a
-    decompression error as a security problem, not merely a data
-    problem.
-
     This attack can be defeated by the use of Modification Detection,
     provided that the implementation does not let the user naively
     return the data to the attacker.  An implementation MUST treat an MDC
@@ -4213,8 +4087,7 @@ SHOULD be rejected.
     permits someone to trick a user to decrypt a message.  Consequently,
     it is important that:
 
-      1.  Implementers treat MDC errors and decompression failures as
-          security problems.
+      1.  Implementers treat MDC errors as security problems.
 
       2.  Implementers implement Modification Detection with all due
           speed and encourage its spread.
