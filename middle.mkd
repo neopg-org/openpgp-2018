@@ -562,7 +562,7 @@ are as follows:
          9  Symmetrically Encrypted Data Packet
         10  Reserved (must be ignored)
         11  Literal Data Packet
-        12  Trust Packet
+        12  Reserved (must be ignored)
         13  User ID Packet
         14  Public-Subkey Packet
         17  User Attribute Packet
@@ -1457,7 +1457,7 @@ Defined features are as follows:
 
 First octet:
 
-    0x01 - Modification Detection (packets 18 and 19)
+    0x01 - Reserved (MUST be 1)
 
     0x02 - AEAD Encrypted Data Packet (packet 20) and version 5
            Symmetric-Key Encrypted Session Key Packets (packet 3)
@@ -2077,19 +2077,6 @@ The body of this packet consists of:
     Text data is stored with &lt;CR>&lt;LF> text endings (i.e.,
     network-normal line endings).  These should be converted to
     native line endings by the receiving software.
-
-## {5.10} Trust Packet (Tag 12)
-
-The Trust packet is used only within keyrings and is not normally
-exported.  Trust packets contain data that record the user's
-specifications of which key holders are trustworthy introducers, along
-with other information that implementing software uses for trust
-information.  The format of Trust packets is defined by a given
-implementation.
-
-Trust packets SHOULD NOT be emitted to output streams that are
-transferred to other users, and they SHOULD be ignored on any input
-other than local keyring files.
 
 ## {5.11} User ID Packet (Tag 13)
 
