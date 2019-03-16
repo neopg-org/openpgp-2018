@@ -877,7 +877,7 @@ The value of the subpacket type octet may be:
           23   Reserved
           24   Reserved
           25   Primary User ID
-          26   Policy URI
+          26   Reserved
           27   Key Flags
           28   Signer's User ID
           29   Reason for Revocation
@@ -1150,13 +1150,6 @@ applies only to User ID packets.  When appearing on a self-signature on
 a User Attribute packet, this subpacket applies only to User Attribute
 packets.  That is to say, there are two different and independent
 "primaries" -- one for User IDs, and one for User Attributes.
-
-#### {5.2.3.20} Policy URI
-
-(String)
-
-This subpacket contains a URI of a document that describes the policy
-under which the signature was issued.
 
 #### {5.2.3.21} Key Flags
 
