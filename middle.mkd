@@ -688,8 +688,7 @@ The body of a version 4 Signature packet contains:
 
   * Unhashed subpacket data set (zero or more subpackets).
 
-  * Two-octet field holding the left 16 bits of the signed hash
-    value.
+  * Two-octet field holding the number 00 00.
 
   * One or more multiprecision integers comprising the signature.
     This portion is algorithm specific:
@@ -715,9 +714,7 @@ The compressed version of R and S for use with EdDSA is described in
 
 The concatenation of the data being signed and the signature data from
 the version number through the hashed subpacket data (inclusive) is
-hashed.  The resulting hash value is what is signed.  The left 16 bits
-of the hash are included in the Signature packet to provide a quick
-test to reject some invalid signatures.
+hashed.  The resulting hash value is what is signed.
 
 There are two fields consisting of Signature subpackets.  The first
 field is hashed with the rest of the signature data, while the second
@@ -738,27 +735,16 @@ incremented by this number will skip over the subpacket data set.
 Each subpacket consists of a subpacket header and a body.  The header
 consists of:
 
-  * the subpacket length (1, 2, or 5 octets),
+  * The octet 0xFF.
+
+  * the subpacket length (4 octets),
 
   * the subpacket type (1 octet),
 
 and is followed by the subpacket-specific data.
 
-The length includes the type octet but not this length.  Its format is
-similar to the "new" format packet header lengths, but cannot have
-Partial Body Lengths.  That is:
-
-       if the 1st octet <  192, then
-           lengthOfLength = 1
-           subpacketLen = 1st_octet
-
-       if the 1st octet >= 192 and < 255, then
-           lengthOfLength = 2
-           subpacketLen = ((1st_octet - 192) << 8) + (2nd_octet) + 192
-
-       if the 1st octet = 255, then
-           lengthOfLength = 5
-           subpacket length = [four-octet scalar starting at 2nd_octet]
+The length includes the type octet but not the initial octet or the
+length octets.
 
 The value of the subpacket type octet may be:
 
@@ -2192,9 +2178,9 @@ Implementations MUST implement AES-256.
         6  Reserved
         7  Reserved
         8  SHA2-256 [](#FIPS180)             "SHA256"
-        9  SHA2-384 [](#FIPS180)             "SHA384"
+        9  RESERVED
        10  SHA2-512 [](#FIPS180)             "SHA512"
-       11  SHA2-224 [](#FIPS180)             "SHA224"
+       11  RESERVED
        12  SHA3-256 [](#FIPS202)             "SHA3-256"
        13  Reserved
        14  SHA3-512 [](#FIPS202)             "SHA3-512"
@@ -2951,24 +2937,6 @@ original, limited system.
 
 # {14} Security Considerations
 
-  - As with any technology involving cryptography, you should check the
-    current literature to determine if any algorithms used here have
-    been found to be vulnerable to attack.
-
-  - This specification uses Public-Key Cryptography technologies.  It is
-    assumed that the private key portion of a public-private key pair is
-    controlled and secured by the proper party or parties.
-
-  - Certain operations in this specification involve the use of random
-    numbers.  An appropriate entropy source should be used to generate
-    these numbers (see [](#RFC4086)).
-
-  - SHA2-224 and SHA2-384 require the same work as SHA2-256 and SHA2-512,
-    respectively.  In general, there are few reasons to use them outside
-    of DSS compatibility.  You need a situation where one needs more
-    security than smaller hashes, but does not want to have the full
-    256-bit or 512-bit data length.
-
   - In late summer 2002, Jallad, Katz, and Schneier published an
     interesting attack on the OpenPGP protocol and some of its
     implementations [JKS02].  In this attack, the attacker modifies a
@@ -2988,34 +2956,6 @@ original, limited system.
     single error code for all variants of decryption errors so as not to
     leak information to an attacker.
 
-  - Some technologies mentioned here may be subject to government
-    control in some countries.
-
-  - In winter 2005, Serge Mister and Robert Zuccherato from Entrust
-    released a paper describing a way that the "quick check" in OpenPGP
-    CFB mode can be used with a random oracle to decrypt two octets of
-    every cipher block [MZ05].  They recommend as prevention not using
-    the quick check at all.
-
-    Many implementers have taken this advice to heart for any data that
-    is symmetrically encrypted and for which the session key is
-    public-key encrypted.  In this case, the quick check is not needed as
-    the public-key encryption of the session key should guarantee that
-    it is the right session key.  In other cases, the implementation
-    should use the quick check with care.
-
-    On the one hand, there is a danger to using it if there is a random
-    oracle that can leak information to an attacker.  In plainer
-    language, there is a danger to using the quick check if timing
-    information about the check can be exposed to an attacker,
-    particularly via an automated service that allows rapidly repeated
-    queries.
-
-    On the other hand, it is inconvenient to the user to be informed
-    that they typed in the wrong passphrase only after a petabyte of
-    data is decrypted.  There are many cases in cryptographic engineering
-    where the implementer must use care and wisdom, and this is one.
-
   - Refer to [](#FIPS186), B.4.1, for the method to generate a
     uniformly distributed ECC private key.
 
@@ -3028,7 +2968,7 @@ original, limited system.
 
 A compliant application MUST implement Ed25519 and
 Curve25519, as defined in Section 11.  A compliant application MUST
-implement SHA2-256 and SHOULD implement SHA2-384 and SHA2-512.  A
+implement SHA2-256 and SHOULD implement SHA2-512.  A
 compliant application MUST implement AES-256.
 
 A compliant application SHOULD follow Section 13{FIXME} regarding the
@@ -3057,15 +2997,6 @@ backward-compatible.
     until relatively recently.  Consequently, there may be keys in
     the wild that do not have these back signatures.  Implementing
     software may handle these keys as it sees fit.
-
-  * OpenPGP does not put limits on the size of public keys.
-    However, larger keys are not necessarily better keys.  Larger
-    keys take more computation time to use, and this can quickly
-    become impractical.  Different OpenPGP implementations may also
-    use different upper bounds for public key sizes, and so care
-    should be taken when choosing sizes to maintain
-    interoperability.  As of 2007 most implementations have an
-    upper bound of 4096 bits.
 
   * ASCII armor is an optional feature of OpenPGP.  The OpenPGP
     working group strives for a minimal set of
