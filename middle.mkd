@@ -29,12 +29,6 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
 "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
 document are to be interpreted as described in [](#RFC2119).
 
-The key words "PRIVATE USE", "HIERARCHICAL ALLOCATION", "FIRST COME
-FIRST SERVED", "EXPERT REVIEW", "SPECIFICATION REQUIRED", "IESG
-APPROVAL", "IETF CONSENSUS", and "STANDARDS ACTION" that appear in
-this document when used to describe namespace allocation are to be
-interpreted as described in [](#RFC2434).
-
 # {3}  Data Element Formats
 
 This section describes the data elements used by OpenPGP.
@@ -364,7 +358,7 @@ defined tags (in decimal) are as follows:
         12  Reserved (must be ignored)
         13  User ID Packet
         14  Public-Subkey Packet
-        17  User Attribute Packet
+        17  Reserved
         18  Reserved
         19  Reserved
         20  AEAD Encrypted Data Packet
@@ -653,7 +647,7 @@ The value of the subpacket type octet may be:
            1   Reserved
            2   Signature Creation Time
            3   Signature Expiration Time
-           4   Exportable Certification
+           4   Reserved
            5   Reserved
            6   Reserved
            7   Revocable
@@ -788,35 +782,6 @@ The validity period of the signature.  This is the number of seconds
 after the signature creation time that the signature expires.  If this
 is not present or has a value of zero, it never expires.
 
-#### {5.2.3.11} Exportable Certification
-
-(1 octet of exportability, 0 for not, 1 for exportable)
-
-This subpacket denotes whether a certification signature is
-"exportable", to be used by other users than the signature's
-issuer.  The packet body contains a Boolean flag indicating whether the
-signature is exportable.  If this packet is not present, the
-certification is exportable; it is equivalent to a flag containing a
-1.
-
-Non-exportable, or "local", certifications are signatures made by a
-user to mark a key as valid within that user's implementation only.
-
-Thus, when an implementation prepares a user's copy of a key for
-transport to another user (this is the process of "exporting" the
-key), any local certification signatures are deleted from the key.
-
-The receiver of a transported key "imports" it, and likewise trims any
-local certifications.  In normal operation, there won't be any,
-assuming the import is performed on an exported key.  However, there
-are instances where this can reasonably happen.  For example, if an
-implementation allows keys to be imported from a key database in
-addition to an exported key, then this situation can arise.
-
-Some implementations do not represent the interest of a single user
-(for example, a key server).  Such implementations always trim local
-certifications from any key they handle.
-
 #### {5.2.3.12} Revocable
 
 (1 octet of revocability, 0 for not, 1 for revocable)
@@ -865,10 +830,7 @@ it is RECOMMENDED that priority be given to the User ID with the most
 recent self-signature.
 
 When appearing on a self-signature on a User ID packet, this subpacket
-applies only to User ID packets.  When appearing on a self-signature on
-a User Attribute packet, this subpacket applies only to User Attribute
-packets.  That is to say, there are two different and independent
-"primaries" -- one for User IDs, and one for User Attributes.
+applies only to User ID packets.
 
 #### {5.2.3.21} Key Flags
 
@@ -931,9 +893,6 @@ responsible for the signing.  Many keyholders use a single key for
 different purposes, such as business communications as well as
 personal communications.  This subpacket allows such a keyholder to
 state which of their roles is making a signature.
-
-This subpacket is not appropriate to use to refer to a User Attribute
-packet.
 
 #### {5.2.3.23} Reason for Revocation
 
@@ -1032,9 +991,8 @@ first the primary key and then the subkey being revoked.
 A certification signature (type 0x10 through 0x13) hashes the User ID
 being bound to the key into the hash context after the above data. A
 V4 or V5 certification hashes the constant 0xB4 for User ID
-certifications or the constant 0xD1 for User Attribute certifications,
-followed by a four-octet number giving the length of the User ID or
-User Attribute data, and then the User ID or User Attribute data.
+certifications, followed by a four-octet number giving the length of
+the User ID, and then the User ID data
 
 When a signature is made over a Signature packet (type 0x50), the hash
 data starts with the octet 0x88, followed by the four-octet length of
@@ -2155,31 +2113,6 @@ with OpenPGP requires that a digest of the message is used as input
 (pre-hashed).  See section XXXXX, "Computing Signatures" for details.
 Truncation of the resulting digest is never applied; the resulting
 digest value is used verbatim as input to the EdDSA algorithm.
-
-
-## {13.8} Reserved Algorithm Numbers
-
-A number of algorithm IDs have been reserved for algorithms that would
-be useful to use in an OpenPGP implementation, yet there are issues
-that prevent an implementer from actually implementing the
-algorithm.  These are marked in Section 9.1, "Public-Key Algorithms",
-as "reserved for".
-
-The reserved public-key algorithm X9.42 (21) does not have the
-necessary parameters, parameter order, or semantics defined.
-
-## {13.10} Private or Experimental Parameters
-
-S2K specifiers, Signature subpacket types, user attribute types, image
-format types, and algorithms described in Section 9 all reserve the
-range 100 to 110 for private and experimental use.  Packet types
-reserve the range 60 to 63 for private and experimental use.  These are
-intentionally managed with the PRIVATE USE method, as described in
-[](#RFC2434).
-
-However, implementations need to be careful with these and promote
-them to full IANA-managed parameters when they grow beyond the
-original, limited system.
 
 # {14} Security Considerations
 
