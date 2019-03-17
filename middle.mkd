@@ -725,15 +725,6 @@ the key creation time that the key expires.  If this is not present or
 has a value of zero, the key never expires.  This is found only on a
 self-signature.
 
-#### {5.2.3.8} Preferred Hash Algorithms
-
-(array of one-octet values)
-
-Message digest algorithm numbers that indicate which algorithms the
-key holder prefers to receive.  Like the preferred symmetric
-algorithms, the list is ordered.  Algorithm numbers are in Section
-9.  This is only found on a self-signature.
-
 #### {5.2.3.10} Signature Expiration Time
 
 (4-octet time field)
