@@ -1743,50 +1743,6 @@ The security of EAX requires that the nonce is never reused, hence the
 requirement that the starting initialization vector be unique.
 
 
-### OCB Mode
-
-The OCB Authenticated-Encryption Algorithm used in this document is
-defined in [](#RFC7253).
-
-OCB was initially defined in [](#OCB1) (now called "OCB1") for
-authenticated encryption, then as an authenticated encryption with
-associated data algorithm with tweakable blockciphers in [](#OCB2)
-("OCB2"), and finally with performance enhancements as [](#OCB3)
-("OCB3").
-
-The [](#RFC7253) algorithm differs from "OCB3" such that tag length
-is encoded into the internally formatted nonce.
-
-OCB usage requires specification of the following parameters:
-
-  * a blockcipher that operate on 128-bit (16-octet) blocks
-  * an authentication tag length of 128 bits
-
-While OCB [](#RFC7253) allows the authentication tag length to be of
-any number up to 128 bits long, this document requires a fixed
-authentication tag length of 128 bits (16 octets) for simplicity.
-
-The nonce for a chunk of chunk index "i" in OCB processing is defined
-as:
-
-    OCB-Nonce_{i} = IV[1..120] xor i
-
-Where,
-
-  * IV is the initialization vector of the message;
-  * IV[i..j] is the substring of IV consisting of bits i through j,
-    inclusive, in big-endian format.
-
-The value of OCB-Nonce_{i} is always 120 bits (15 octets) long as the
-longest allowed nonce length of OCB mode according to [](#RFC7253).
-
-Security of OCB mode depends on the non-repeated nature of nonces used
-for the same key on distinct plaintext [](#RFC7253). Therefore the
-initialization vector per message MUST be distinct, and OCB mode
-SHOULD only be used in environments when there is certainty to
-fulfilling this requirement.
-
-
 # {6}  Radix-64 Conversions
 
 As stated in the introduction, OpenPGP's underlying native
@@ -2305,11 +2261,10 @@ fingerprints.
        ID  Algorithm
  --------  ---------
         1  EAX [](#EAX)
-        2  OCB [](#RFC7253)
+        2  Reserved
  100--110  Private/Experimental algorithm
 
-Implementations MUST implement EAX.  Implementations MAY implement
-OCB and other algorithms.
+Implementations MUST implement EAX.
 
 # {10} IANA Considerations
 
@@ -3234,12 +3189,5 @@ backward-compatible.
     implementations of OpenPGP-MIME [](#RFC3156) already have a
     requirement for ASCII armor so those implementations will
     necessarily have support.
-
-  * The OCB mode is patented and a debate is still underway on whether
-    it can be included in RFC4880bis or needs to be moved to a
-    separate document.  For the sole purpose of experimenting with the
-    Preferred AEAD Algorithms signature subpacket it is has been
-    included in this I-D.
-
 
 <!-- eof -->
