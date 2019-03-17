@@ -2298,16 +2298,6 @@ named curve referenced in this document:
   Identifier             len hexadecimal
                              representation
   ------------           --- -----------------------        -------------
-  1.2.840.10045.3.1.7     8  2A 86 48 CE 3D 03 01 07        NIST P-256
-
-  1.3.132.0.34            5  2B 81 04 00 22                 NIST P-384
-
-  1.3.132.0.35            5  2B 81 04 00 23                 NIST P-521
-
-  1.3.36.3.3.2.8.1.1.7    9  2B 24 03 03 02 08 01 01 07     brainpoolP256r1
-
-  1.3.36.3.3.2.8.1.1.13   9  2B 24 03 03 02 08 01 01 0D     brainpoolP512r1
-
   1.3.6.1.4.1.11591.15.1  9  2B 06 01 04 01 DA 47 0F 01     Ed25519
 
   1.3.6.1.4.1.3029.1.5.1  10 2B 06 01 04 01 97 55 01 05 01  Curve25519
@@ -2319,8 +2309,8 @@ with subsequent truncation.  The truncation removes the two fields of
 encoded Object Identifier.  The first omitted field is one octet
 representing the Object Identifier tag, and the second omitted field
 is the length of the Object Identifier body.  For example, the
-complete ASN.1 DER encoding for the NIST P-256 curve OID is "06 08 2A
-86 48 CE 3D 03 01 07", from which the first entry in the table above
+complete ASN.1 DER encoding for the Ed25519 curve OID is "06 01 04
+01 DA 47 0F 01", from which the first entry in the table above
 is constructed by omitting the first two octets.  Only the truncated
 sequence of octets is the valid representation of a curve OID.
 
@@ -2776,10 +2766,7 @@ found in [](#KOBLITZ).
 
 ## Supported ECC Curves
 
-This document references five named prime field curves, defined in
-[](#FIPS186) as "Curve P-256", "Curve P-384", and "Curve P-521"; and
-defined in [](#RFC5639) as "brainpoolP256r1", and "brainpoolP512r1".
-Further curve "Curve25519", defined in [](#RFC7748) is referenced
+This document references curve "Curve25519", defined in [](#RFC7748)
 for use with Ed25519 (EdDSA signing) and X25519 (encryption).
 
 The named curves are referenced as a sequence of bytes in this
@@ -2810,9 +2797,7 @@ where x is the x coordinate of the point P encoded to the rules
 defined for the specified curve.  This format is used for ECDH keys
 based on curves expressed in Montgomery form.
 
-Therefore, the exact size of the MPI payload is 515 bits for "Curve
-P-256", 771 for "Curve P-384", 1059 for "Curve P-521", and 263 for
-Curve25519.
+Therefore, the exact size of the MPI payload is 263 for Curve25519.
 
 Even though the zero point, also called the point at infinity, may
 occur as a result of arithmetic operations on points of an elliptic
@@ -2920,9 +2905,8 @@ definition of the OtherInfo bitstring [](#SP800-56A):
     the decryption.  For version 5 keys the 20 leftmost octets of the
     fingerprint are used.
 
-The size of the KDF parameters sequence, defined above, is either 54
-for the NIST curve P-256, 51 for the curves P-384 and P-521, or
-56 for Curve25519.
+The size of the KDF parameters sequence, defined above, is 56 for
+Curve25519.
 
 The key wrapping method is described in [](#RFC3394).  KDF produces a
 symmetric key that is used as a key-encryption key (KEK) as specified
@@ -3379,97 +3363,6 @@ original, limited system.
   - Refer to [](#FIPS186), B.4.1, for the method to generate a
     uniformly distributed ECC private key.
 
-  - The curves proposed in this document correspond to the symmetric
-    key sizes 128 bits, 192 bits, and 256 bits, as described in the
-    table below.  This allows a compliant application to offer
-    balanced public key security, which is compatible with the
-    symmetric key strength for each AES algorithm defined here.
-
-    The following table defines the hash and the symmetric encryption
-    algorithm that SHOULD be used with a given curve for ECDSA or ECDH.
-    A stronger hash algorithm or a symmetric key algorithm MAY be used
-    for a given ECC curve.  However, note that the increase in the
-    strength of the hash algorithm or the symmetric key algorithm may
-    not increase the overall security offered by the given ECC key.
-
-            Curve name | ECC      | RSA         | Hash size | Symmetric
-                       | strength | strength,   |           | key size
-                       |          | informative |           |
-            -----------+----------+-------------+-----------+-----------
-            NIST P-256      256         3072         256         128
-            NIST P-384      384         7680         384         192
-            NIST P-521      521        15360         512         256
-
-    Requirement levels indicated elsewhere in this document lead to the
-    following combinations of algorithms in the OpenPGP profile: MUST
-    implement NIST curve P-256 / SHA2-256 / AES-128, SHOULD implement
-    NIST curve P-521 / SHA2-512 / AES-256, MAY implement NIST curve
-    P-384 / SHA2-384 / AES-256, among other allowed combinations.
-
-    Consistent with the table above, the following table defines the KDF
-    hash algorithm and the AES KEK encryption algorithm that SHOULD be
-    used with a given curve for ECDH.  A stronger KDF hash algorithm or
-    AES KEK algorithm MAY be used for a given ECC curve.
-
-            Curve name | Recommended KDF | Recommended KEK
-                       | hash algorithm  | encryption algorithm
-            -----------+-----------------+-----------------------
-            NIST P-256      SHA2-256            AES-128
-            NIST P-384      SHA2-384            AES-192
-            NIST P-521      SHA2-512            AES-256
-
-    This document explicitly discourages the use of algorithms other
-    than AES as a KEK algorithm because backward compatibility of the
-    ECDH format is not a concern.  The KEK algorithm is only used within
-    the scope of a Public-Key Encrypted Session Key Packet, which
-    represents an ECDH key recipient of a message.  Compare this with
-    the algorithm used for the session key of the message, which MAY be
-    different from a KEK algorithm.
-
-    Compliant applications SHOULD implement, advertise through key
-    preferences, and use the strongest algorithms specified in this
-    document.
-
-    Note that the symmetric algorithm preference list may make it
-    impossible to use the balanced strength of symmetric key algorithms
-    for a corresponding public key.  For example, the presence of the
-    symmetric key algorithm IDs and their order in the key preference
-    list affects the algorithm choices available to the encoding side,
-    which in turn may make the adherence to the table above infeasible.
-    Therefore, compliance with this specification is a concern
-    throughout the life of the key, starting immediately after the key
-    generation when the key preferences are first added to a key.  It is
-    generally advisable to position a symmetric algorithm ID of strength
-    matching the public key at the head of the key preference list.
-
-    Encryption to multiple recipients often results in an unordered
-    intersection subset.  For example, if the first recipient's set is
-    {A, B} and the second's is {B, A}, the intersection is an unordered
-    set of two algorithms, A and B.  In this case, a compliant
-    application SHOULD choose the stronger encryption algorithm.
-
-    Resource constraints, such as limited computational power, is a
-    likely reason why an application might prefer to use the weakest
-    algorithm.  On the other side of the spectrum are applications that
-    can implement every algorithm defined in this document.  Most
-    applications are expected to fall into either of two categories.  A
-    compliant application in the second, or strongest, category SHOULD
-    prefer AES-256 to AES-192.
-
-    SHA-1 MUST NOT be used with the ECDSA or the KDF in the ECDH method.
-
-    Side channel attacks are a concern when a compliant application's
-    use of the OpenPGP format can be modeled by a decryption or signing
-    oracle model, for example, when an application is a network service
-    performing decryption to unauthenticated remote users.  ECC scalar
-    multiplication operations used in ECDSA and ECDH are vulnerable to
-    side channel attacks.  Countermeasures can often be taken at the
-    higher protocol level, such as limiting the number of allowed
-    failures or time-blinding of the operations associated with each
-    network interface.  Mitigations at the scalar multiplication level
-    seek to eliminate any measurable distinction between the ECC point
-    addition and doubling operations.
-
   - Although technically possible, the EdDSA algorithm MUST NOT be
     used with a digest algorithms weaker than SHA2-256.
 
@@ -3477,10 +3370,7 @@ original, limited system.
 
 ## OpenPGP ECC Profile
 
-A compliant application MUST implement NIST curve P-256, SHOULD
-implement NIST curve P-521, SHOULD implemend Ed25519, SHOULD implement
-Curve25519, MAY implement NIST curve P-384, MAY implement
-brainpoolP256r1, MAY implement brainpoolP512r1, and MAY implement
+A compliant application MUST implement Ed25519 and
 Curve25519, as defined in Section 11.  A compliant application MUST
 implement SHA2-256 and SHOULD implement SHA2-384 and SHA2-512.  A
 compliant application MUST implement AES-128 and SHOULD implement
@@ -3497,33 +3387,6 @@ choice of the following algorithms for each curve:
 
 It is recommended that the chosen symmetric algorithm for message
 encryption be no less secure than the KEK algorithm.
-
-## Suite-B Profile
-
-A subset of algorithms allowed by this document can be used to achieve
-[](#SuiteB) compatibility.  The references to [](#SuiteB) in this
-document are informative.  This document is primarily concerned with
-format specification, leaving additional security restrictions
-unspecified, such as matching the assigned security level of
-information to authorized recipients or interoperability concerns
-arising from fewer allowed algorithms in [](#SuiteB) than allowed by
-this document.
-
-## Security Strength at 192 Bits
-
-To achieve the security strength of 192 bits, [](#SuiteB) requires
-NIST curve P-384, AES-256, and SHA2-384.  The symmetric algorithm
-restriction means that the algorithm of KEK used for key wrapping in
-Section 8 and an OpenPGP session key used for message encryption must
-be AES-256.  The hash algorithm restriction means that the hash
-algorithms of KDF and the OpenPGP message digest calculation must be
-SHA2-384.
-
-## Security Strength at 128 Bits
-
-The set of algorithms in Section 12.2.1{FIXME} is extended to allow NIST
-curve P-256, AES-128, and SHA2-256.
-
 
 # {15} Implementation Nits
 
