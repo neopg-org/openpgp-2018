@@ -654,8 +654,8 @@ The value of the subpacket type octet may be:
            2   Signature Creation Time
            3   Signature Expiration Time
            4   Exportable Certification
-           5   Trust Signature
-           6   Regular Expression
+           5   Reserved
+           6   Reserved
            7   Revocable
            8   Reserved
            9   Key Expiration Time
@@ -827,35 +827,6 @@ are not revocable have any later revocation signatures ignored.  They
 represent a commitment by the signer that he cannot revoke his
 signature for the life of his key.  If this packet is not present, the
 signature is revocable.
-
-#### {5.2.3.13} Trust Signature
-
-(1 octet "level" (depth), 1 octet of trust amount)
-
-Signer asserts that the key is not only valid but also trustworthy at
-the specified level.  Level 0 has the same meaning as an ordinary
-validity signature.  Level 1 means that the signed key is asserted to
-be a valid trusted introducer, with the 2nd octet of the body
-specifying the degree of trust.  Level 2 means that the signed key is
-asserted to be trusted to issue level 1 trust signatures, i.e., that
-it is a "meta introducer".  Generally, a level n trust signature
-asserts that a key is trusted to issue level n-1 trust signatures.  The
-trust amount is in a range from 0-255, interpreted such that values
-less than 120 indicate partial trust and values of 120 or greater
-indicate complete trust.  Implementations SHOULD emit values of 60 for
-partial trust and 120 for complete trust.
-
-#### {5.2.3.14} Regular Expression
-
-(null-terminated regular expression)
-
-Used in conjunction with trust Signature packets (of level \> 0) to
-limit the scope of trust that is extended.  Only signatures by the
-target key on User IDs that match the regular expression in the body
-of this packet have trust extended by the trust Signature
-subpacket.  The regular expression uses the same syntax as the Henry
-Spencer's "almost public domain" regular expression [REGEX] package. A
-description of the syntax is found in Section 8 below.
 
 #### {5.2.3.15} Revocation Key
 
@@ -1540,37 +1511,6 @@ exclusive-oring the low eight octets of it with the chunk index.
 The security of EAX requires that the nonce is never reused, hence the
 requirement that the starting initialization vector be unique.
 
-# {8}  Regular Expressions
-
-A regular expression is zero or more branches, separated by '|'.  It
-matches anything that matches one of the branches.
-
-A branch is zero or more pieces, concatenated.  It matches a match for
-the first, followed by a match for the second, etc.
-
-A piece is an atom possibly followed by '*', '+', or '?'.  An atom
-followed by '*' matches a sequence of 0 or more matches of the
-atom.  An atom followed by '+' matches a sequence of 1 or more matches
-of the atom.  An atom followed by '?' matches a match of the atom, or
-the null string.
-
-An atom is a regular expression in parentheses (matching a match for
-the regular expression), a range (see below), '.' (matching any single
-character), '^' (matching the null string at the beginning of the
-input string), '$' (matching the null string at the end of the input
-string), a '\\' followed by a single character (matching that
-character), or a single character with no other significance (matching
-that character).
-
-A range is a sequence of characters enclosed in '[]'.  It normally
-matches any single character from the sequence.  If the sequence begins
-with '^', it matches any single character not from the rest of the
-sequence.  If two characters in the sequence are separated by '-', this
-is shorthand for the full list of ASCII characters between them (e.g.,
-'[0-9]' matches any decimal digit).  To include a literal ']' in the
-sequence, make it the first character (following a possible '^').  To
-include a literal '-', make it the first or last character.
-
 # {9}  Constants
 
 This section describes the constants used in OpenPGP.
@@ -1664,12 +1604,12 @@ Implementations MUST implement AES-256.
         6  Reserved
         7  Reserved
         8  SHA2-256 [](#FIPS180)             "SHA256"
-        9  RESERVED
-       10  SHA2-512 [](#FIPS180)             "SHA512"
-       11  RESERVED
-       12  SHA3-256 [](#FIPS202)             "SHA3-256"
+        9  Reserved
+       10  Reserved
+       11  Reserved
+       12  Reserved
        13  Reserved
-       14  SHA3-512 [](#FIPS202)             "SHA3-512"
+       14  Reserved
  100--110  Private/Experimental algorithm
 
 Implementations MUST implement SHA2-256.
@@ -1683,146 +1623,6 @@ Implementations MUST implement SHA2-256.
  100--110  Private/Experimental algorithm
 
 Implementations MUST implement EAX.
-
-# {10} IANA Considerations
-
-OpenPGP is highly parameterized, and consequently there are a number
-of considerations for allocating parameters for extensions.  This
-section describes how IANA should look at extensions to the protocol
-as described in this document.
-
-## {10.1} New String-to-Key Specifier Types
-
-OpenPGP S2K specifiers contain a mechanism for new algorithms to turn
-a string into a key.  This specification creates a registry of S2K
-specifier types.  The registry includes the S2K type, the name of the
-S2K, and a reference to the defining specification.  The initial values
-for this registry can be found in Section 3.7.1.  Adding a new S2K
-specifier MUST be done through the IETF CONSENSUS method, as described
-in [](#RFC2434).
-
-## {10.2} New Packets
-
-Major new features of OpenPGP are defined through new packet
-types.  This specification creates a registry of packet types.  The
-registry includes the packet type, the name of the packet, and a
-reference to the defining specification.  The initial values for this
-registry can be found in Section 4.3.  Adding a new packet type MUST be
-done through the IETF CONSENSUS method, as described in [](#RFC2434).
-
-### {10.2.2} New Signature Subpackets
-
-OpenPGP signatures contain a mechanism for signed (or unsigned) data
-to be added to them for a variety of purposes in the Signature
-subpackets as discussed in Section 5.2.3.1.  This specification creates
-a registry of Signature subpacket types.  The registry includes the
-Signature subpacket type, the name of the subpacket, and a reference
-to the defining specification.  The initial values for this registry
-can be found in Section 5.2.3.1.  Adding a new Signature subpacket MUST
-be done through the IETF CONSENSUS method, as described in [](#RFC2434).
-
-#### {10.2.2.3} Key Flags Extensions
-
-OpenPGP signatures contain a mechanism for flags to be specified about
-key usage.  This specification creates a registry of key usage
-flags.  The registry includes the key flags value, the name of the
-flag, and a reference to the defining specification.  The initial
-values for this registry can be found in Section 5.2.3.21.  Adding a
-new key usage flag MUST be done through the IETF CONSENSUS method, as
-described in [](#RFC2434).
-
-#### {10.2.2.4} Reason for Revocation Extensions
-
-OpenPGP signatures contain a mechanism for flags to be specified about
-why a key was revoked.  This specification creates a registry of
-"Reason for Revocation" flags.  The registry includes the "Reason for
-Revocation" flags value, the name of the flag, and a reference to the
-defining specification.  The initial values for this registry can be
-found in Section 5.2.3.23.  Adding a new feature flag MUST be done
-through the IETF CONSENSUS method, as described in [](#RFC2434).
-
-#### {10.2.2.5} Implementation Features
-
-OpenPGP signatures contain a mechanism for flags to be specified
-stating which optional features an implementation supports.  This
-specification creates a registry of feature-implementation flags.  The
-registry includes the feature-implementation flags value, the name of
-the flag, and a reference to the defining specification.  The initial
-values for this registry can be found in Section 5.2.3.24.  Adding a
-new feature-implementation flag MUST be done through the IETF
-CONSENSUS method, as described in [](#RFC2434).
-
-Also see Section 13.12 for more information about when feature flags
-are needed.
-
-### {10.2.3} New Packet Versions
-
-The core OpenPGP packets all have version numbers, and can be revised
-by introducing a new version of an existing packet.  This specification
-creates a registry of packet types.  The registry includes the packet
-type, the number of the version, and a reference to the defining
-specification.  The initial values for this registry can be found in
-Section 5.  Adding a new packet version MUST be done through the IETF
-CONSENSUS method, as described in [](#RFC2434).
-
-### {10.3.1} Public-Key Algorithms
-
-OpenPGP specifies a number of public-key algorithms.  This
-specification creates a registry of public-key algorithm
-identifiers.  The registry includes the algorithm name, its key sizes
-and parameters, and a reference to the defining specification.  The
-initial values for this registry can be found in Section 9.  Adding a
-new public-key algorithm MUST be done through the IETF CONSENSUS
-method, as described in [](#RFC2434).
-
-This document requests IANA register the following public-key algorithm:
-
-   ID    Algorithm                   Reference
-   --    --------------------------  ---------
-   22    EdDSA public key algorithm  This doc
-
-   [Notes to RFC-Editor: Please remove the table above on publication.
-    It is desirable not to reuse old or reserved algorithms because
-    some existing tools might print a wrong description.  A higher
-    number is also an indication for a newer algorithm.  As of now
-    22 is the next free number.]
-
-
-### {10.3.2} Symmetric-Key Algorithms
-
-OpenPGP specifies a number of symmetric-key algorithms.  This
-specification creates a registry of symmetric-key algorithm
-identifiers.  The registry includes the algorithm name, its key sizes
-and block size, and a reference to the defining specification.  The
-initial values for this registry can be found in Section 9.  Adding a
-new symmetric-key algorithm MUST be done through the IETF CONSENSUS
-method, as described in [](#RFC2434).
-
-### {10.3.3} Hash Algorithms
-
-OpenPGP specifies a number of hash algorithms.  This specification
-creates a registry of hash algorithm identifiers.  The registry
-includes the algorithm name, a text representation of that name, its
-block size, an OID hash prefix, and a reference to the defining
-specification.  The initial values for this registry can be found in
-Section 9 for the algorithm identifiers and text names, and
-Section 5.2.2 for the OIDs and expanded signature prefixes.  Adding a
-new hash algorithm MUST be done through the IETF CONSENSUS method, as
-described in [](#RFC2434).
-
-This document requests IANA register the following hash algorithms:
-
-   ID    Algorithm                   Reference
-   --    --------------------------  ---------
-   12    SHA3-256                    This doc
-   13    Reserved
-   14    SHA3-512                    This doc
-
-   [Notes to RFC-Editor: Please remove the table above on publication.
-    It is desirable not to reuse old or reserved algorithms because
-    some existing tools might print a wrong description.  The ID 13
-    has been reserved so that the SHA3 algorithm IDs align nicely with
-    their SHA2 counterparts.]
 
 # {11} Packet Composition
 
