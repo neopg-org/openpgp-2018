@@ -672,8 +672,6 @@ These meanings are as follows:
       document) that cannot include a target subpacket.
 
 
-### {5.2.2} (Intentionally Left Blank)
-
 ### {5.2.3} Version 4 Signature Packet Format
 
 The body of a version 4 Signature packet contains:
@@ -787,7 +785,7 @@ The value of the subpacket type octet may be:
            8   Reserved
            9   Key Expiration Time
           10   Placeholder for backward compatibility
-          11   Preferred Symmetric Algorithms
+          11   Reserved
           12   Revocation Key
     13 to 15   Reserved
           16   Issuer
@@ -857,16 +855,6 @@ user name, and subpackets that appear in the subkey self-signature
 apply to the subkey.  Lastly, subpackets on the direct-key signature
 apply to the entire key.
 
-Implementing software should interpret a self-signature's preference
-subpackets as narrowly as possible.  For example, suppose a key has two
-user names, Alice and Bob.  Suppose that Alice prefers the symmetric
-algorithm CAST5, and Bob prefers IDEA or TripleDES.  If the software
-locates this key via Alice's name, then the preferred algorithm is
-CAST5; if software locates the key via Bob's name, then the preferred
-algorithm is IDEA.  If the key is located by Key ID, the algorithm of
-the primary User ID of the key provides the preferred symmetric
-algorithm.
-
 Revoking a self-signature or allowing it to expire has a semantic
 meaning that varies with the signature type.  Revoking the self-
 signature on a User ID effectively retires that user name.  The
@@ -915,16 +903,6 @@ The validity period of the key.  This is the number of seconds after
 the key creation time that the key expires.  If this is not present or
 has a value of zero, the key never expires.  This is found only on a
 self-signature.
-
-#### {5.2.3.7} Preferred Symmetric Algorithms
-
-(array of one-octet values)
-
-Symmetric algorithm numbers that indicate which algorithms the key
-holder prefers to use.  The subpacket body is an ordered list of octets
-with the most preferred listed first.  It is assumed that only
-algorithms listed are supported by the recipient's software.  Algorithm
-numbers are in Section 9.  This is only found on a self- signature.
 
 #### Preferred AEAD Algorithms
 
@@ -2279,26 +2257,23 @@ sequence of octets is the valid representation of a curve OID.
 
        ID  Algorithm
  --------  ---------
-        0  Plaintext or unencrypted data
+        0  Reserved
         1  Reserved
-        2  TripleDES (DES-EDE, [](#SCHNEIER) [](#HAC)
-                       - 168 bit key derived from 192)
-        3  CAST5 (128 bit key, as per [](#RFC2144))
-        4  Blowfish (128 bit key, 16 rounds) [](#BLOWFISH)
+        2  Reserved
+        3  Reserved
+        4  Reserved
         5  Reserved
         6  Reserved
-        7  AES with 128-bit key [](#AES)
-        8  AES with 192-bit key
+        7  Reserved
+        8  Reserved
         9  AES with 256-bit key
-       10  Twofish with 256-bit key [](#TWOFISH)
+       10  Reserved
        11  Reserved
        12  Reserved
        13  Reserved
  100--110  Private/Experimental algorithm
 
-Implementations MUST implement TripleDES.  Implementations SHOULD
-implement AES-128 and CAST5.  Implementations MAY implement any other
-algorithm.
+Implementations MUST implement AES-256.
 
 ## {9.4} Hash Algorithms
 
@@ -2869,10 +2844,9 @@ to k31, is composed to form the following 40 octet sequence:
 The octets c0 and c1 above denote the checksum.  This encoding allows
 the sender to obfuscate the size of the symmetric encryption key used
 to encrypt the data.  For example, assuming that an AES algorithm is
-used for the session key, the sender MAY use 21, 13, and 5 bytes of
-padding for AES-128, AES-192, and AES-256, respectively, to provide
-the same number of octets, 40 total, as an input to the key wrapping
-method.
+used for the session key, the sender MAY use 5 bytes of padding for
+AES-256, respectively, to provide the same number of octets, 40 total,
+as an input to the key wrapping method.
 
 The output of the method consists of two fields.  The first field is
 the MPI containing the ephemeral key used to establish the shared
@@ -3033,40 +3007,6 @@ Steps:
 
      6. Output EM.
 
-## {13.2} Symmetric Algorithm Preferences
-
-The symmetric algorithm preference is an ordered list of algorithms
-that the keyholder accepts.  Since it is found on a self-signature, it
-is possible that a keyholder may have multiple, different
-preferences.  For example, Alice may have TripleDES only specified for
-"alice@work.com" but CAST5, Blowfish, and TripleDES specified for
-"alice@home.org".  Note that it is also possible for preferences to be
-in a subkey's binding signature.
-
-Since TripleDES is the MUST-implement algorithm, if it is not
-explicitly in the list, it is tacitly at the end.  However, it is good
-form to place it there explicitly.  Note also that if an implementation
-does not implement the preference, then it is implicitly a
-TripleDES-only implementation.
-
-An implementation MUST NOT use a symmetric algorithm that is not in
-the recipient's preference list.  When encrypting to more than one
-recipient, the implementation finds a suitable algorithm by taking the
-intersection of the preferences of the recipients.  Note that the
-MUST-implement algorithm, TripleDES, ensures that the intersection is
-not null.  The implementation may use any mechanism to pick an
-algorithm in the intersection.
-
-If an implementation can decrypt a message that a keyholder doesn't
-have in their preferences, the implementation SHOULD decrypt the
-message anyway, but MUST warn the keyholder that the protocol has been
-violated.  For example, suppose that Alice, above, has software that
-implements all algorithms in this specification.  Nonetheless, she
-prefers subsets for work or home.  If she is sent a message encrypted
-with IDEA, which is not in her preferences, the software warns her
-that someone sent her an IDEA-encrypted message, but it would ideally
-decrypt it anyway.
-
 ## {13.3} Other Algorithm Preferences
 
 Other algorithm preferences work similarly to the symmetric algorithm
@@ -3167,33 +3107,10 @@ original, limited system.
     you as an implementer promote dual-use keys, you should at least be
     aware of this controversy.
 
-  - As OpenPGP combines many different asymmetric, symmetric, and hash
-    algorithms, each with different measures of strength, care should be
-    taken that the weakest element of an OpenPGP message is still
-    sufficiently strong for the purpose at hand.  While consensus about
-    the strength of a given algorithm may evolve, NIST Special
-    Publication 800-57 [](#SP800-57) recommends the following list of
-    equivalent strengths:
-
-             Asymmetric  |  Hash  |  Symmetric
-              key size   |  size  |   key size
-             ------------+--------+-----------
-                1024        160         80
-                2048        224        112
-                3072        256        128
-                7680        384        192
-               15360        512        256
-
   - If you are building an authentication system, the recipient may
     specify a preferred signing algorithm.  However, the signer would be
     foolish to use a weak algorithm simply because the recipient
     requests it.
-
-  - Some of the encryption algorithms mentioned in this document have
-    been analyzed less than others.  For example, although CAST5 is
-    presently considered strong, it has been analyzed less than
-    TripleDES.  Other algorithms may have other controversies surrounding
-    them.
 
   - In late summer 2002, Jallad, Katz, and Schneier published an
     interesting attack on the OpenPGP protocol and some of its
@@ -3255,8 +3172,7 @@ original, limited system.
 A compliant application MUST implement Ed25519 and
 Curve25519, as defined in Section 11.  A compliant application MUST
 implement SHA2-256 and SHOULD implement SHA2-384 and SHA2-512.  A
-compliant application MUST implement AES-128 and SHOULD implement
-AES-256.
+compliant application MUST implement AES-256.
 
 A compliant application SHOULD follow Section 13{FIXME} regarding the
 choice of the following algorithms for each curve:
