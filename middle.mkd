@@ -21,16 +21,6 @@ This document obsoletes: RFC 6637 (ECC for OpenPGP)
   * PGP - Pretty Good Privacy.  PGP is a family of software systems
     developed by Philip R. Zimmermann from which OpenPGP is based.
 
-  * PGP 5.x - This version of PGP is formerly known as "PGP 3" in the
-    community and also in the predecessor of this document, RFC 1991.
-    It is referred to here as PGP 5.x because that software was the
-    first release of the "PGP 3" code base.
-
-  * GnuPG - GNU Privacy Guard, also called GPG.  GnuPG is an OpenPGP
-    implementation that avoids all encumbered algorithms.
-    Consequently, early versions of GnuPG did not include RSA public
-    keys.
-
 "PGP", "Pretty Good", and "Pretty Good Privacy" are trademarks of PGP
 Corporation and are used with permission.  The term "OpenPGP" refers to
 the protocol described in this and related documents.
@@ -788,7 +778,7 @@ The value of the subpacket type octet may be:
           11   Reserved
           12   Revocation Key
     13 to 15   Reserved
-          16   Issuer
+          16   Reserved
     17 to 19   Reserved
           20   Reserved
           21   Preferred Hash Algorithms
@@ -886,14 +876,6 @@ RECOMMENDED that priority be given to the most recent self-signature.
 The time the signature was made.
 
 MUST be present in the hashed area.
-
-#### {5.2.3.5} Issuer
-
-(8-octet Key ID)
-
-The OpenPGP Key ID of the key issuing the signature.  If the version
-of that key is greater than 4, this subpacket MUST NOT be included in
-the signature.
 
 #### {5.2.3.6} Key Expiration Time
 
@@ -1004,11 +986,10 @@ description of the syntax is found in Section 8 below.
 
 #### {5.2.3.15} Revocation Key
 
-(1 octet of class, 1 octet of public-key algorithm ID, 20 or 32 octets
-of fingerprint)
+(1 octet of class, 1 octet of public-key algorithm ID, 32 octets of
+fingerprint)
 
-V4 keys use the full 20 octet fingerprint; V5 keys use the
-full 32 octet fingerprint
+V5 keys use the full 32 octet fingerprint.
 
 Authorizes the specified key to issue revocation signatures for this
 key.  Class octet must have bit 0x80 set.  If the bit 0x40 is set, then
@@ -1163,8 +1144,8 @@ third-party or timestamp signature, this designates what signature is
 signed.  All arguments are an identifier of that target signature.
 
 The N octets of hash data MUST be the size of the hash of the
-signature.  For example, a target signature with a SHA-1 hash MUST
-have 20 octets of hash data.
+signature.  For example, a target signature with a SHA2-256 hash MUST
+have 32 octets of hash data.
 
 #### {5.2.3.26} Embedded Signature
 
@@ -1179,13 +1160,9 @@ to, or be incorporated in, another signature.
 (1 octet key version number, N octets of fingerprint)
 
 The OpenPGP Key fingerprint of the key issuing the signature.  This
-subpacket SHOULD be included in all signatures.  If the version of the
-issuing key is 4 and an Issuer subpacket is also included in the
-signature, the key ID of the Issuer subpacket MUST match the low
-64 bits of the fingerprint.
+subpacket SHOULD be included in all signatures.
 
-Note that the length N of the fingerprint for a version 4 key is 20
-octets; for a version 5 key N is 32.
+Note that the length N of the fingerprint for a version 5 key N is 32.
 
 
 ### {5.2.4} Computing Signatures
@@ -1393,30 +1370,6 @@ packet and has exactly the same format.
 
 ### {5.5.2} Public-Key Packet Formats
 
-There are two versions of key-material packets.  Version 4 keys first
-appeared in PGP 5.0 and are the preferred key version for OpenPGP.
-
-OpenPGP implementations MUST create keys with version 4 format.
-
-A version 4 packet contains:
-
-  * A one-octet version number (4).
-
-  * A four-octet number denoting the time that the key was created.
-
-  * A one-octet number denoting the public-key algorithm of this
-    key.
-
-  * A series of values comprising the key material.  This is
-    algorithm-specific and described in section XXXX.
-
-The version 5 format is similar to the version 4 format except for the
-addition of a count for the key material.  This count helps parsing
-secret key packets (which are an extension of the public key packet
-format) in the case of an unknown algoritm.  In addition, fingerprints
-of version 5 keys are calculated differently from version 4 keys, as
-described in the section "Enhanced Key Formats".
-
 A version 5 packet contains:
 
   * A one-octet version number (5).
@@ -1493,8 +1446,8 @@ MPIs is specified in the Secret-Key packet.
 
 Encryption/decryption of the secret data is done in CFB mode using the
 key created from the passphrase and the Initial Vector from the
-packet. With V4 and V5 keys, all secret MPI values are encrypted,
-including the MPI bitcount prefix.
+packet. With V5 keys, all secret MPI values are encrypted, including
+the MPI bitcount prefix.
 
 If the string-to-key usage octet is 253, the encrypted MPI values are
 encrypted as one combined plaintext exactly as an AEAD Encrypted Data
@@ -1503,13 +1456,9 @@ octet is included in the normal calculations of additional data.
 
 The two-octet checksum that follows the algorithm-specific portion is
 the algebraic sum, mod 65536, of the plaintext of all the algorithm-
-specific octets (including MPI prefix and data).  With V4 keys, the
-checksum is encrypted like the algorithm-specific data.  This value is
-used to check that the passphrase was correct.  However, this checksum
+specific octets (including MPI prefix and data). This checksum
 is deprecated; an implementation SHOULD NOT use it, but should rather
-use the SHA-1 hash denoted with a usage octet of 254.  The reason for
-this is that there are some attacks that involve undetectably
-modifying the secret key.
+use the SHA-1 hash denoted with a usage octet of 254.
 
 
 ## Algorithm-specific Parts of Keys
@@ -2251,10 +2200,7 @@ Implementations MUST implement AES-256.
        14  SHA3-512 [](#FIPS202)             "SHA3-512"
  100--110  Private/Experimental algorithm
 
-Implementations MUST implement SHA2-256.  Implementations MAY implement
-other algorithms.  Implementations SHOULD NOT create messages which
-require the use of SHA-1 with the exception of computing version 4 key
-fingerprints.
+Implementations MUST implement SHA2-256.
 
 ## AEAD Algorithms
 
@@ -2448,7 +2394,7 @@ that this public key belongs to the user identified by this User ID.
 
 After the User ID packet, there may be zero or more Subkey packets.
 In general, subkeys are provided in cases where the top-level public
-key is a signature-only key.  However, any V4 key may have subkeys,
+key is a signature-only key.  However, any V5 key may have subkeys,
 and the subkeys may be encryption-only keys, signature-only keys, or
 general-purpose keys.
 
@@ -2520,7 +2466,7 @@ data for which they are a signature.
 
 ## {12.1}  Key Structures
 
-The format of an OpenPGP V4 key that uses multiple public keys is
+The format of an OpenPGP V5 key that uses multiple public keys is
 similar except that the other keys are added to the end as "subkeys"
 of the primary key.
 
@@ -2540,7 +2486,7 @@ signature.
 In the above diagram, if the binding signature of a subkey has been
 revoked, the revoked key may be removed, leaving only one key.
 
-In a V4 key, the primary key SHOULD be a key capable of
+In a V5 key, the primary key SHOULD be a key capable of
 certification. A primary key capable of making signatures SHOULD be
 accompanied by either a certification signature (on a User ID) or a
 signature directly on the key.
@@ -2556,34 +2502,6 @@ only for certifying subkeys that are used for encryption and
 signatures.
 
 ## {12.2} Key IDs and Fingerprints
-
-A V4 fingerprint is the 160-bit SHA-1 hash of the octet 0x99, followed
-by the two-octet packet length, followed by the entire Public-Key
-packet starting with the version field.  The Key ID is the low-order 64
-bits of the fingerprint.  Here are the fields of the hash material,
-with the example of a DSA key:
-
-    a.1) 0x99 (1 octet)
-
-    a.2) two-octet scalar octet count of (b)-(e)
-
-    b) version number = 4 (1 octet);
-
-    c) timestamp of key creation (4 octets);
-
-    d) algorithm (1 octet): 17 = DSA (example);
-
-    e) Algorithm-specific fields.
-
-    Algorithm-Specific Fields for DSA keys (example):
-
-    e.1) MPI of DSA prime p;
-
-    e.2) MPI of DSA group order q (q is a prime divisor of p-1);
-
-    e.3) MPI of DSA group generator g;
-
-    e.4) MPI of DSA public-key value y (= g\*\*x mod p where x is secret).
 
 A V5 fingerprint is the 256-bit SHA2-256 hash of the octet 0x99, followed
 by the four-octet packet length, followed by the entire Public-Key
@@ -2620,14 +2538,10 @@ different keys with the same Key ID.  Note that there is a much
 smaller, but still non-zero, probability that two different keys have
 the same fingerprint.
 
-Also note that if V4 and V5 format keys share the same RSA key
-material, they will have different Key IDs as well as different
-fingerprints.
-
 Finally, the Key ID and fingerprint of a subkey are calculated in the
-same way as for a primary key, including the 0x99 (V4 key) or 0x9A (V5
-key) as the first octet (even though this is not a valid packet ID for
-a public subkey).
+same way as for a primary key, including the 0x9A (V5 key) as the
+first octet (even though this is not a valid packet ID for a public
+subkey).
 
 # Elliptic Curve Cryptography
 
@@ -3055,18 +2969,6 @@ original, limited system.
     security than smaller hashes, but does not want to have the full
     256-bit or 512-bit data length.
 
-  - Many security protocol designers think that it is a bad idea to use
-    a single key for both privacy (encryption) and integrity
-    (signatures).  In fact, this was one of the motivating forces behind
-    the V4 key format with separate signature and encryption keys.  If
-    you as an implementer promote dual-use keys, you should at least be
-    aware of this controversy.
-
-  - If you are building an authentication system, the recipient may
-    specify a preferred signing algorithm.  However, the signer would be
-    foolish to use a weak algorithm simply because the recipient
-    requests it.
-
   - In late summer 2002, Jallad, Katz, and Schneier published an
     interesting attack on the OpenPGP protocol and some of its
     implementations [JKS02].  In this attack, the attacker modifies a
@@ -3150,14 +3052,6 @@ differences are small, but small differences are frequently more
 vexing than large differences.  Thus, this is a non-comprehensive list
 of potential problems and gotchas for a developer who is trying to be
 backward-compatible.
-
-  * There are many ways possible for two keys to have the same key
-    material, but different fingerprints (and thus Key IDs).
-    Perhaps the most interesting is an RSA key that has been
-    "upgraded" to V4 format, but since a V4 fingerprint is
-    constructed by hashing the key creation time along with other
-    things, two V4 keys created at different times, yet with the
-    same key material will have different fingerprints.
 
   * The 0x19 back signatures were not required for signing subkeys
     until relatively recently.  Consequently, there may be keys in
