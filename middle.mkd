@@ -546,21 +546,6 @@ These meanings are as follows:
       over the same data as the certificate that it revokes, and
       should have a later creation date than that certificate.
 
-0x40
-  :   Timestamp signature.  This signature is only meaningful for
-      the timestamp contained in it.
-
-0x50
-  :   Third-Party Confirmation signature.  This signature is a
-      signature over some other OpenPGP Signature packet(s).  It is
-      analogous to a notary seal on the signed data. A third-party
-      signature SHOULD include Signature Target subpacket(s) to
-      give easy identification.  Note that we really do mean
-      SHOULD.  There are plausible uses for this (such as a blind
-      party that only sees the signature, not the key or source
-      document) that cannot include a target subpacket.
-
-
 ### {5.2.3} Version 4 Signature Packet Format
 
 The body of a version 4 Signature packet contains:
@@ -580,14 +565,7 @@ The body of a version 4 Signature packet contains:
 
   * Hashed subpacket data set (zero or more subpackets).
 
-  * Two-octet scalar octet count for the following unhashed
-    subpacket data.  Note that this is the length in octets of all
-    of the unhashed subpackets; a pointer incremented by this
-    number will skip over the unhashed subpackets.
-
-  * Unhashed subpacket data set (zero or more subpackets).
-
-  * Two-octet field holding the number 00 00.
+  * Four-octet field holding the number 00 00 00 00.
 
   * One or more multiprecision integers comprising the signature.
     This portion is algorithm specific:
@@ -608,12 +586,6 @@ The compressed version of R and S for use with EdDSA is described in
 The concatenation of the data being signed and the signature data from
 the version number through the hashed subpacket data (inclusive) is
 hashed.  The resulting hash value is what is signed.
-
-There are two fields consisting of Signature subpackets.  The first
-field is hashed with the rest of the signature data, while the second
-is unhashed.  The second set of subpackets is not cryptographically
-protected by the signature and should include only advisory
-information.
 
 The algorithms for converting the hash function result to a signature
 are described in a section below.
@@ -653,14 +625,14 @@ The value of the subpacket type octet may be:
            7   Revocable
            8   Reserved
            9   Key Expiration Time
-          10   Placeholder for backward compatibility
+          10   Reserved
           11   Reserved
           12   Revocation Key
     13 to 15   Reserved
           16   Reserved
     17 to 19   Reserved
           20   Reserved
-          21   Preferred Hash Algorithms
+          21   Reserved
           22   Reserved
           23   Reserved
           24   Reserved
@@ -690,13 +662,6 @@ purpose of the critical bit is to allow the signer to tell an
 evaluator that it would prefer a new, unknown feature to generate an
 error than be ignored.
 
-Implementations SHOULD implement the four preferred algorithm
-subpackets (11, 21, 22, and 34), as well as the "Reason for Revocation"
-subpacket.  Note, however, that if an implementation chooses not to
-implement some of the preferences, it is required to behave in a
-polite manner to respect the wishes of those users who do implement
-these preferences.
-
 #### {5.2.3.2} Signature Subpacket Types
 
 A number of subpackets are currently defined.  Some subpackets apply to
@@ -704,11 +669,6 @@ the signature itself and some are attributes of the key.  Subpackets
 that are found on a self-signature are placed on a certification made
 by the key itself.  Note that a key may have more than one User ID, and
 thus may have more than one self-signature, and differing subpackets.
-
-A subpacket may be found either in the hashed or unhashed subpacket
-sections of a signature.  If a subpacket is not hashed, then the
-information in it cannot be considered definitive because it is not
-part of the signature proper.
 
 #### {5.2.3.3} Notes on Self-Signatures
 
@@ -998,9 +958,7 @@ When a signature is made over a Signature packet (type 0x50), the hash
 data starts with the octet 0x88, followed by the four-octet length of
 the signature, and then the body of the Signature packet. (Note that
 this is an old-style packet header for a Signature packet with the
-length-of-length set to zero.) The unhashed subpacket data of the
-Signature packet being hashed is not included in the hash, and the
-unhashed subpacket data length value is set to zero.
+length-of-length set to zero.)
 
 Once the data body is hashed, then a trailer is hashed. A V4 or V5
 signature hashes the packet body starting from its first field, the
