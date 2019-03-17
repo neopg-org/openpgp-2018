@@ -35,101 +35,6 @@ APPROVAL", "IETF CONSENSUS", and "STANDARDS ACTION" that appear in
 this document when used to describe namespace allocation are to be
 interpreted as described in [](#RFC2434).
 
-# {2} General functions
-
-OpenPGP provides data integrity services for messages and data files
-by using these core technologies:
-
- - digital signatures
-
- - encryption
-
- - Radix-64 conversion
-
-In addition, OpenPGP provides key management and certificate services,
-but many of these are beyond the scope of this document.
-
-## {2.1} Confidentiality via Encryption
-
-OpenPGP combines symmetric-key encryption and public-key encryption to
-provide confidentiality.  When made confidential, first the object is
-encrypted using a symmetric encryption algorithm.  Each symmetric key
-is used only once, for a single object. A new "session key" is
-generated as a random number for each object (sometimes referred to as
-a session).  Since it is used only once, the session key is bound to
-the message and transmitted with it.  To protect the key, it is
-encrypted with the receiver's public key.  The sequence is as follows:
-
-1.  The sender creates a message.
-
-2.  The sending OpenPGP generates a random number to be used as a
-    session key for this message only.
-
-3.  The session key is encrypted using each recipient's public key.
-    These "encrypted session keys" start the message.
-
-4.  The sending OpenPGP encrypts the message using the session key,
-    which forms the remainder of the message.
-
-5.  The receiving OpenPGP decrypts the session key using the recipient's
-    private key.
-
-6.  The receiving OpenPGP decrypts the message using the session key.
-
-With symmetric-key encryption, an object may be encrypted with a
-symmetric key derived from a passphrase (or other shared secret), or a
-two-stage mechanism similar to the public-key method described above
-in which a session key is itself encrypted with a symmetric algorithm
-keyed from a shared secret.
-
-Both digital signature and confidentiality services may be applied to
-the same message.  First, a signature is generated for the message and
-attached to the message.  Then the message plus signature is encrypted
-using a symmetric session key.  Finally, the session key is encrypted
-using public-key encryption and prefixed to the encrypted block.
-
-## {2.2} Authentication via Digital Signature
-
-The digital signature uses a hash code or message digest algorithm,
-and a public-key signature algorithm.  The sequence is as follows:
-
-1.  The sender creates a message.
-
-2.  The sending software generates a hash code of the message.
-
-3.  The sending software generates a signature from the hash code using
-    the sender's private key.
-
-4.  The binary signature is attached to the message.
-
-5.  The receiving software keeps a copy of the message signature.
-
-6.  The receiving software generates a new hash code for the received
-    message and verifies it using the message's signature.  If the
-    verification is successful, the message is accepted as authentic.
-
-## {2.4} Conversion to Radix-64
-
-OpenPGP's underlying native representation for encrypted messages,
-signature certificates, and keys is a stream of arbitrary octets.  Some
-systems only permit the use of blocks consisting of seven-bit,
-printable text.  For transporting OpenPGP's native raw binary octets
-through channels that are not safe to raw binary data, a printable
-encoding of these binary octets is needed.  OpenPGP provides the
-service of converting the raw 8-bit binary octet stream to a stream of
-printable ASCII characters, called Radix-64 encoding or ASCII Armor.
-
-Implementations SHOULD provide Radix-64 conversions.
-
-## {2.5} Signature-Only Applications
-
-OpenPGP is designed for applications that use both encryption and
-signatures, but there are a number of problems that are solved by a
-signature-only implementation.  Although this specification requires
-both encryption and signatures, it is reasonable for there to be
-subset implementations that are non-conformant only in that they omit
-encryption.
-
 # {3}  Data Element Formats
 
 This section describes the data elements used by OpenPGP.
@@ -697,12 +602,6 @@ The body of a version 4 Signature packet contains:
 
       * Multiprecision integer (MPI) of RSA signature value m**d mod n.
 
-    Algorithm-Specific Fields for ECDSA signatures:
-
-      * MPI of ECDSA value r.
-
-      * MPI of ECDSA value s.
-
     Algorithm-Specific Fields for EdDSA signatures:
 
       * MPI of EdDSA compressed value r.
@@ -780,7 +679,7 @@ The value of the subpacket type octet may be:
           31   Signature Target
           32   Embedded Signature
           33   Issuer Fingerprint
-          34   Preferred AEAD Algorithms
+          34   Reserved
   100 to 110   Private or experimental
 
 An implementation SHOULD ignore any subpacket of a type that it does
@@ -871,18 +770,6 @@ The validity period of the key.  This is the number of seconds after
 the key creation time that the key expires.  If this is not present or
 has a value of zero, the key never expires.  This is found only on a
 self-signature.
-
-#### Preferred AEAD Algorithms
-
-(array of one-octet values)
-
-AEAD algorithm numbers that indicate which AEAD algorithms the key
-holder prefers to use.  The subpacket body is an ordered list of
-octets with the most preferred listed first.  It is assumed that only
-algorithms listed are supported by the recipient's software.
-Algorithm numbers are in Section [](AEAD Algorithms).  This is only
-found on a self- signature.
-
 
 #### {5.2.3.8} Preferred Hash Algorithms
 
@@ -1471,27 +1358,6 @@ The secret key is this series of multiprecision integers:
   * MPI of u, the multiplicative inverse of p, mod q.
 
 
-### Algorithm-Specific Part for ECDSA Keys
-
-The public key is this series of values:
-
-  * a variable-length field containing a curve OID, formatted
-    as follows:
-
-      - a one-octet size of the following field; values 0 and
-        0xFF are reserved for future extensions,
-
-      - the octets representing a curve OID, defined in
-        section 11{FIXME};
-
-  * a MPI of an EC point representing a public key.
-
-The secret key is this single multiprecision integer:
-
-  * MPI of an integer representing the secret key, which is a
-    scalar of the public EC point.
-
-
 ### Algorithm-Specific Part for EdDSA Keys
 
 The public key is this series of values:
@@ -1542,9 +1408,6 @@ The public key is this series of values:
       - a one-octet algorithm ID for the symmetric algorithm
         used to wrap the symmetric key used for the message
         encryption; see Section 8 for details.
-
-Observe that an ECDH public key is composed of the same sequence of
-fields that define an ECDSA key, plus the KDF parameters field.
 
 The secret key is this single multiprecision integer:
 
@@ -2094,26 +1957,19 @@ algorithms.
        ID  Algorithm
  --------  ---------
         1  RSA (Encrypt or Sign) [](#HAC)
-        2  RSA Encrypt-Only [](#HAC)
-        3  RSA Sign-Only [](#HAC)
+        2  Reserved
+        3  Reserved
        16  Reserved
        17  Reserved
        18  ECDH public key algorithm
-       19  ECDSA public key algorithm [](#FIPS186)
+       19  Reserved
        20  Reserved
        21  Reserved
        22  EdDSA  [](#I-D.irtf-cfrg-eddsa)
  100--110  Private/Experimental algorithm
 
-Implementations MUST implement ECDSA for signatures, and ECDH for
-encryption.  Implementations SHOULD implement RSA keys (1).  RSA
-Encrypt-Only (2) and RSA Sign-Only are deprecated and SHOULD NOT be
-generated, but may be interpreted.  See Section 13.5.  Implementations
-MAY implement any other algorithm.
-
-A compatible specification of ECDSA is given in [](#RFC6090) as "KT-I
-Signatures" and in [](#SEC1); ECDH is defined in [](#ec-dh-algorithm-ecdh)
-this document.
+Implementations MUST implement EdDSA for signatures, and ECDH for
+encryption.  Implementations SHOULD implement RSA keys (1).
 
 ## ECC Curve OID
 
@@ -2544,9 +2400,9 @@ The named curves are referenced as a sequence of bytes in this
 document, called throughout, curve OID.  [](#ecc-curve-oid) describes
 in detail how this sequence of bytes is formed.
 
-## ECDSA and ECDH Conversion Primitives
+## ECDH Conversion Primitives
 
-This document defines the uncompressed point format for ECDSA and ECDH
+This document defines the uncompressed point format for ECDH
 and a custom compression format for certain curves. The point is
 encoded in the Multiprecision Integer (MPI) format.
 
@@ -2883,24 +2739,6 @@ may use.
 Since SHA2-256 is the MUST-implement hash algorithm, if it is not
 explicitly in the list, it is tacitly at the end.  However, it is good
 form to place it there explicitly.
-
-## {13.4} Plaintext
-
-Algorithm 0, "plaintext", may only be used to denote secret keys that
-are stored in the clear.  Implementations MUST NOT use plaintext in
-AEAD Encrypted Data packets; they must use Literal Data
-packets to encode unencrypted or literal data.
-
-## {13.5} RSA
-
-There are algorithm types for RSA Sign-Only, and RSA Encrypt-Only
-keys.  These types are deprecated.  The "key flags" subpacket in a
-signature is a much better way to express the same idea, and
-generalizes it to all algorithms.  An implementation SHOULD NOT create
-such a key, but MAY interpret it.
-
-An implementation SHOULD NOT implement RSA keys of size less than 1024
-bits.
 
 ## EdDSA
 
